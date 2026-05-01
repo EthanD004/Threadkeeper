@@ -3,15 +3,15 @@
     "threadkeeper": {
       "command": "node",
       "args": [
-        "src/mcp-server.js"
+        "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\src\\mcp-server.js"
       ],
+      "cwd": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper",
       "alwaysAllow": [
         "save_thread",
         "get_manifest",
-        "get_handover"
+        "get_handover",
+        "write_manifest"
       ]
     }
   }
 }
-
-// Made with Bob
