@@ -32,7 +32,57 @@ class ThreadKeeperServer {
     );
 
     this.threadFilePath = path.join(process.cwd(), 'data', 'thread.json');
+    this.graphFilePath = path.join(process.cwd(), 'data', 'graph.json');
     this.setupHandlers();
+  }
+
+  /**
+   * Read the graph.json file
+   */
+  async readGraphData() {
+    try {
+      const data = await fs.readFile(this.graphFilePath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error('No graph data found. Run "tk analyze" first to generate the code graph.');
+      }
+      throw new Error(`Failed to read graph data: ${error.message}`);
+    }
+  }
+
+  /**
+   * Fuzzy match a search term against a string
+   * Returns a score (0-1) indicating match quality
+   */
+  fuzzyMatch(search, target) {
+    if (!search || !target) return 0;
+    
+    search = search.toLowerCase();
+    target = target.toLowerCase();
+    
+    // Exact match
+    if (target === search) return 1.0;
+    
+    // Contains match
+    if (target.includes(search)) return 0.8;
+    
+    // Fuzzy character matching
+    let searchIndex = 0;
+    let matches = 0;
+    
+    for (let i = 0; i < target.length && searchIndex < search.length; i++) {
+      if (target[i] === search[searchIndex]) {
+        matches++;
+        searchIndex++;
+      }
+    }
+    
+    if (searchIndex === search.length) {
+      return 0.5 * (matches / target.length);
+    }
+    
+    return 0;
   }
 
   /**
@@ -95,7 +145,7 @@ class ThreadKeeperServer {
         tools: [
           {
             name: 'save_thread',
-            description: 'Capture the current development state and save to thread.json. Includes git diff, terminal history (last 50 commands), and files modified in the last 2 hours.',
+            description: 'Capture the current development state and save to thread.json. Includes git diff, terminal history (last 20 commands), and files modified in the last 2 hours.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -115,11 +165,118 @@ class ThreadKeeperServer {
             },
           },
           {
+            name: 'write_manifest',
+            description: 'Write the synthesized manifest data to data/manifest.json for the dashboard to display. Call this after analyzing thread data with get_manifest to save the four key fields: objective, lastError, deadEnds, and nextStep.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                objective: {
+                  type: 'string',
+                  description: 'What the developer was working on when they paused',
+                },
+                lastError: {
+                  type: 'string',
+                  description: 'The most recent blocker or error encountered',
+                },
+                deadEnds: {
+                  type: 'string',
+                  description: 'Approaches that were tried but didn\'t work',
+                },
+                nextStep: {
+                  type: 'string',
+                  description: 'Concrete action to take next',
+                },
+              },
+              required: ['objective', 'lastError', 'deadEnds', 'nextStep'],
+            },
+          },
+          {
             name: 'get_handover',
             description: 'Get a handover note formatted for Slack. Returns the raw thread data for Bob to synthesize into a teammate-friendly message explaining the context, current blocker, and next steps.',
             inputSchema: {
               type: 'object',
               properties: {},
+            },
+          },
+          {
+            name: 'query_graph_nodes',
+            description: 'Search for nodes in the code graph by name, type, or file. Supports fuzzy matching to find classes, functions, or dependencies. Example: search for "CodeAnalyzer" to find the class, or "*.js" to find all JavaScript files.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                search: {
+                  type: 'string',
+                  description: 'Search term (node name, partial name, or file pattern)',
+                },
+                type: {
+                  type: 'string',
+                  description: 'Filter by node type: "class", "function", or "dependency"',
+                },
+                file: {
+                  type: 'string',
+                  description: 'Filter by file path (supports partial matching)',
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of results to return (default: 20)',
+                },
+              },
+            },
+          },
+          {
+            name: 'find_callers',
+            description: 'Find all functions/classes that call a specific function. Useful for understanding where a function is used. Example: find what calls "captureState" to see its usage points.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                nodeName: {
+                  type: 'string',
+                  description: 'Name of the function/class to find callers for',
+                },
+              },
+              required: ['nodeName'],
+            },
+          },
+          {
+            name: 'find_callees',
+            description: 'Find all functions called by a specific function. Useful for understanding what a function does. Example: find what "setupHandlers" calls to see its dependencies.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                nodeName: {
+                  type: 'string',
+                  description: 'Name of the function/class to find callees for',
+                },
+              },
+              required: ['nodeName'],
+            },
+          },
+          {
+            name: 'find_dependencies',
+            description: 'Find all dependencies (imports/requires) of a class or function. Shows external packages and internal modules used. Example: find dependencies of "ThreadKeeperServer" to see what it imports.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                nodeName: {
+                  type: 'string',
+                  description: 'Name of the class/function to find dependencies for',
+                },
+              },
+              required: ['nodeName'],
+            },
+          },
+          {
+            name: 'analyze_node',
+            description: 'Get detailed information about a specific node including its type, file location, and all relationships (callers, callees, dependencies). Example: analyze "CodeAnalyzer" to see its complete structure.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                nodeName: {
+                  type: 'string',
+                  description: 'Name of the node to analyze',
+                },
+              },
+              required: ['nodeName'],
             },
           },
         ],
@@ -186,6 +343,59 @@ class ThreadKeeperServer {
           };
         }
 
+        case 'write_manifest': {
+          const { objective, lastError, deadEnds, nextStep } = args;
+          
+          // Validate required fields
+          if (!objective || !lastError || !deadEnds || !nextStep) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: 'Error: All four fields (objective, lastError, deadEnds, nextStep) are required',
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          const manifest = {
+            objective,
+            lastError,
+            deadEnds,
+            nextStep,
+          };
+
+          try {
+            // Ensure data directory exists
+            const dataDir = path.join(process.cwd(), 'data');
+            await fs.mkdir(dataDir, { recursive: true });
+
+            // Write manifest file
+            const manifestPath = path.join(dataDir, 'manifest.json');
+            await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Manifest saved successfully to ${manifestPath}\n\nContent:\n${JSON.stringify(manifest, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error writing manifest: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
         case 'get_handover': {
           const threadData = await this.readThreadData();
           
@@ -217,6 +427,379 @@ class ThreadKeeperServer {
               },
             ],
           };
+        }
+
+        case 'query_graph_nodes': {
+          try {
+            const graphData = await this.readGraphData();
+            const { search, type, file, limit = 20 } = args || {};
+            
+            let results = graphData.nodes;
+            
+            // Filter by type if specified
+            if (type) {
+              results = results.filter(node => node.type === type);
+            }
+            
+            // Filter by file if specified
+            if (file) {
+              results = results.filter(node =>
+                node.file && node.file.toLowerCase().includes(file.toLowerCase())
+              );
+            }
+            
+            // Search by name if specified
+            if (search) {
+              results = results.map(node => ({
+                ...node,
+                score: this.fuzzyMatch(search, node.name) ||
+                       (node.file ? this.fuzzyMatch(search, node.file) * 0.5 : 0)
+              }))
+              .filter(node => node.score > 0)
+              .sort((a, b) => b.score - a.score);
+            }
+            
+            // Apply limit
+            results = results.slice(0, limit);
+            
+            // Format results
+            const formattedResults = results.map(node => ({
+              id: node.id,
+              name: node.name,
+              type: node.type,
+              file: node.file || 'N/A',
+              language: node.language || 'N/A',
+              ...(node.score && { matchScore: node.score.toFixed(2) })
+            }));
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Found ${formattedResults.length} node(s):\n\n${JSON.stringify(formattedResults, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error querying graph: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        case 'find_callers': {
+          try {
+            const graphData = await this.readGraphData();
+            const { nodeName } = args;
+            
+            if (!nodeName) {
+              throw new Error('nodeName is required');
+            }
+            
+            // Find the target node(s) by name
+            const targetNodes = graphData.nodes.filter(node =>
+              node.name.toLowerCase() === nodeName.toLowerCase()
+            );
+            
+            if (targetNodes.length === 0) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `No node found with name "${nodeName}"`,
+                  },
+                ],
+              };
+            }
+            
+            // Find all edges that point to these nodes
+            const callers = [];
+            for (const targetNode of targetNodes) {
+              const incomingEdges = graphData.edges.filter(edge =>
+                edge.target === targetNode.id && edge.type === 'calls'
+              );
+              
+              for (const edge of incomingEdges) {
+                const callerNode = graphData.nodes.find(n => n.id === edge.source);
+                if (callerNode) {
+                  callers.push({
+                    caller: callerNode.name,
+                    callerType: callerNode.type,
+                    callerFile: callerNode.file || 'N/A',
+                    target: targetNode.name,
+                    targetFile: targetNode.file || 'N/A',
+                  });
+                }
+              }
+            }
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Found ${callers.length} caller(s) for "${nodeName}":\n\n${JSON.stringify(callers, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error finding callers: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        case 'find_callees': {
+          try {
+            const graphData = await this.readGraphData();
+            const { nodeName } = args;
+            
+            if (!nodeName) {
+              throw new Error('nodeName is required');
+            }
+            
+            // Find the source node(s) by name
+            const sourceNodes = graphData.nodes.filter(node =>
+              node.name.toLowerCase() === nodeName.toLowerCase()
+            );
+            
+            if (sourceNodes.length === 0) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `No node found with name "${nodeName}"`,
+                  },
+                ],
+              };
+            }
+            
+            // Find all edges that originate from these nodes
+            const callees = [];
+            for (const sourceNode of sourceNodes) {
+              const outgoingEdges = graphData.edges.filter(edge =>
+                edge.source === sourceNode.id && edge.type === 'calls'
+              );
+              
+              for (const edge of outgoingEdges) {
+                const calleeNode = graphData.nodes.find(n => n.id === edge.target);
+                if (calleeNode) {
+                  callees.push({
+                    source: sourceNode.name,
+                    sourceFile: sourceNode.file || 'N/A',
+                    callee: calleeNode.name,
+                    calleeType: calleeNode.type,
+                    calleeFile: calleeNode.file || 'N/A',
+                  });
+                }
+              }
+            }
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Found ${callees.length} callee(s) for "${nodeName}":\n\n${JSON.stringify(callees, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error finding callees: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        case 'find_dependencies': {
+          try {
+            const graphData = await this.readGraphData();
+            const { nodeName } = args;
+            
+            if (!nodeName) {
+              throw new Error('nodeName is required');
+            }
+            
+            // Find the source node(s) by name
+            const sourceNodes = graphData.nodes.filter(node =>
+              node.name.toLowerCase() === nodeName.toLowerCase()
+            );
+            
+            if (sourceNodes.length === 0) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `No node found with name "${nodeName}"`,
+                  },
+                ],
+              };
+            }
+            
+            // Find all dependency nodes connected to these nodes
+            const dependencies = [];
+            for (const sourceNode of sourceNodes) {
+              const outgoingEdges = graphData.edges.filter(edge =>
+                edge.source === sourceNode.id
+              );
+              
+              for (const edge of outgoingEdges) {
+                const depNode = graphData.nodes.find(n => n.id === edge.target);
+                if (depNode && depNode.type === 'dependency') {
+                  dependencies.push({
+                    source: sourceNode.name,
+                    sourceFile: sourceNode.file || 'N/A',
+                    dependency: depNode.name,
+                    dependencyType: edge.type,
+                  });
+                }
+              }
+            }
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Found ${dependencies.length} dependenc(ies) for "${nodeName}":\n\n${JSON.stringify(dependencies, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error finding dependencies: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        case 'analyze_node': {
+          try {
+            const graphData = await this.readGraphData();
+            const { nodeName } = args;
+            
+            if (!nodeName) {
+              throw new Error('nodeName is required');
+            }
+            
+            // Find the target node(s) by name
+            const targetNodes = graphData.nodes.filter(node =>
+              node.name.toLowerCase() === nodeName.toLowerCase()
+            );
+            
+            if (targetNodes.length === 0) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `No node found with name "${nodeName}"`,
+                  },
+                ],
+              };
+            }
+            
+            const analyses = [];
+            
+            for (const targetNode of targetNodes) {
+              // Find callers (incoming calls edges)
+              const callers = graphData.edges
+                .filter(edge => edge.target === targetNode.id && edge.type === 'calls')
+                .map(edge => {
+                  const caller = graphData.nodes.find(n => n.id === edge.source);
+                  return caller ? { name: caller.name, file: caller.file } : null;
+                })
+                .filter(Boolean);
+              
+              // Find callees (outgoing calls edges)
+              const callees = graphData.edges
+                .filter(edge => edge.source === targetNode.id && edge.type === 'calls')
+                .map(edge => {
+                  const callee = graphData.nodes.find(n => n.id === edge.target);
+                  return callee ? { name: callee.name, type: callee.type, file: callee.file } : null;
+                })
+                .filter(Boolean);
+              
+              // Find dependencies (outgoing edges to dependency nodes)
+              const dependencies = graphData.edges
+                .filter(edge => edge.source === targetNode.id)
+                .map(edge => {
+                  const dep = graphData.nodes.find(n => n.id === edge.target);
+                  return dep && dep.type === 'dependency' ? { name: dep.name } : null;
+                })
+                .filter(Boolean);
+              
+              // Find relationships (extends, implements, etc.)
+              const relationships = graphData.edges
+                .filter(edge =>
+                  (edge.source === targetNode.id || edge.target === targetNode.id) &&
+                  edge.type !== 'calls'
+                )
+                .map(edge => ({
+                  type: edge.type,
+                  direction: edge.source === targetNode.id ? 'outgoing' : 'incoming',
+                  relatedNode: edge.source === targetNode.id ? edge.target : edge.source,
+                }));
+              
+              analyses.push({
+                node: {
+                  id: targetNode.id,
+                  name: targetNode.name,
+                  type: targetNode.type,
+                  file: targetNode.file || 'N/A',
+                  language: targetNode.language || 'N/A',
+                },
+                callers: callers,
+                callees: callees,
+                dependencies: dependencies,
+                relationships: relationships,
+                summary: {
+                  totalCallers: callers.length,
+                  totalCallees: callees.length,
+                  totalDependencies: dependencies.length,
+                  totalRelationships: relationships.length,
+                }
+              });
+            }
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Analysis for "${nodeName}":\n\n${JSON.stringify(analyses, null, 2)}`,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Error analyzing node: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
         }
 
         default:

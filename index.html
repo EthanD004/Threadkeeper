@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Threadkeeper Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -201,6 +202,109 @@
             text-align: center;
         }
 
+        .thread-section {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .thread-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .diff-viewer {
+            background-color: #1e1e1e;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .diff-line {
+            display: block;
+            padding: 2px 0;
+            white-space: pre;
+        }
+
+        .diff-line.added {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .diff-line.removed {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .diff-line.context {
+            color: var(--text-secondary);
+        }
+
+        .diff-file-header {
+            color: var(--accent-objective);
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal-log {
+            background-color: #1e1e1e;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-command {
+            color: #10b981;
+            display: block;
+            padding: 2px 0;
+        }
+
+        .terminal-command::before {
+            content: '$ ';
+            color: var(--text-secondary);
+        }
+
+        .files-list {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-path {
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .file-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
         .handover-section {
             margin-top: 3rem;
             margin-bottom: 2rem;
@@ -275,6 +379,497 @@
             font-style: italic;
         }
 
+        .filter-container {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s ease;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-objective);
+        }
+
+        .filter-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .copy-button {
+            padding: 0.5rem 1rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .copy-button:hover {
+            background-color: var(--accent-objective);
+            border-color: var(--accent-objective);
+        }
+
+        .copy-button.copied {
+            background-color: var(--accent-nextstep);
+            border-color: var(--accent-nextstep);
+        }
+
+        .section-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .section-toggle:hover .thread-title {
+            color: var(--accent-objective);
+        }
+
+        .toggle-icon {
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--accent-objective);
+            font-weight: 600;
+        }
+
+        #graph-svg {
+            width: 100%;
+            height: 600px;
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+        }
+
+        .graph-section {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .graph-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .graph-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            min-height: 600px;
+            position: relative;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .graph-control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .graph-control-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .graph-control-group select,
+        .graph-control-group input {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .graph-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+        }
+
+        .graph-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .graph-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .graph-stat-value {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .node:hover {
+            stroke-width: 3px;
+        }
+
+        .node-class {
+            fill: var(--accent-objective);
+        }
+
+        .node-function {
+            fill: var(--accent-nextstep);
+        }
+
+        .node-dependency {
+            fill: var(--accent-deadends);
+        }
+
+        .link {
+            stroke: var(--text-secondary);
+            stroke-opacity: 0.3;
+            stroke-width: 1.5px;
+        }
+
+        .link-extends {
+            stroke: var(--accent-error);
+            stroke-opacity: 0.5;
+        }
+
+        .link-calls {
+            stroke: var(--accent-objective);
+            stroke-opacity: 0.4;
+        }
+
+        .node-label {
+            fill: var(--text-primary);
+            font-size: 10px;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--text-secondary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .tooltip-content {
+            font-size: 0.85rem;
+        /* Snapshot Timeline Styles */
+        .timeline-section {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .timeline-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-objective), var(--accent-nextstep));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .timeline-item.latest {
+            border-left: 3px solid var(--accent-nextstep);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--accent-objective);
+            border: 2px solid var(--bg-secondary);
+        }
+
+        .timeline-item.latest::before {
+            background-color: var(--accent-nextstep);
+            box-shadow: 0 0 10px var(--accent-nextstep);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-time {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .timeline-badge {
+            background-color: var(--accent-nextstep);
+            color: var(--bg-primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .timeline-note {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .timeline-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .timeline-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .timeline-button {
+            padding: 0.25rem 0.75rem;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-button:hover {
+            background-color: var(--accent-objective);
+            border-color: var(--accent-objective);
+        }
+
+        /* Code Search Styles */
+        .search-section {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .search-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .search-button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--accent-objective);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .search-button:hover {
+            background-color: var(--accent-nextstep);
+        }
+
+        .search-results {
+            margin-top: 1rem;
+        }
+
+        .search-result-item {
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--accent-objective);
+        }
+
+        .search-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .search-result-type {
+            padding: 0.25rem 0.5rem;
+            background-color: var(--accent-objective);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .search-result-file {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result-details {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .search-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+        }
+
+            color: var(--text-secondary);
+        }
+
         footer {
             text-align: center;
             margin-top: 3rem;
@@ -310,11 +905,140 @@
         <div id="error-container"></div>
         <div id="dashboard" class="dashboard" style="display: none;"></div>
 
+        <div id="thread-section" class="thread-section" style="display: none;">
+            <!-- Git Diff Section -->
+            <div class="section-toggle" onclick="toggleSection('git-diff-section')">
+                <h2 class="thread-title">📝 Recent Changes</h2>
+                <span class="toggle-icon" id="git-diff-toggle">▼</span>
+            </div>
+            <div id="git-diff-section" class="section-content">
+                <div id="git-diff-stats" class="stats-bar" style="display: none;"></div>
+                <div class="filter-container" id="git-diff-filter-container" style="display: none;">
+                    <input type="text" id="git-diff-filter" class="filter-input" placeholder="Filter changes (e.g., filename, +added, -removed)...">
+                    <button class="copy-button" onclick="copyContent('git-diff')">
+                        <span>📋</span>
+                        <span>Copy</span>
+                    </button>
+                </div>
+                <div id="git-diff" class="diff-viewer" style="display: none;">
+                    <!-- Git diff will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Terminal Commands Section -->
+            <div class="section-toggle" onclick="toggleSection('terminal-section')" style="margin-top: 2rem;">
+                <h2 class="thread-title">💻 Terminal Commands</h2>
+                <span class="toggle-icon" id="terminal-toggle">▼</span>
+            </div>
+            <div id="terminal-section" class="section-content">
+                <div id="terminal-stats" class="stats-bar" style="display: none;"></div>
+                <div class="filter-container" id="terminal-filter-container" style="display: none;">
+                    <input type="text" id="terminal-filter" class="filter-input" placeholder="Filter commands...">
+                    <button class="copy-button" onclick="copyContent('terminal-log')">
+                        <span>📋</span>
+                        <span>Copy</span>
+                    </button>
+                </div>
+                <div id="terminal-log" class="terminal-log" style="display: none;">
+                    <!-- Terminal commands will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Files Section -->
+            <div class="section-toggle" onclick="toggleSection('files-section')" style="margin-top: 2rem;">
+                <h2 class="thread-title">📁 Modified Files</h2>
+                <span class="toggle-icon" id="files-toggle">▼</span>
+            </div>
+            <div id="files-section" class="section-content">
+                <div id="files-stats" class="stats-bar" style="display: none;"></div>
+                <div class="filter-container" id="files-filter-container" style="display: none;">
+                    <input type="text" id="files-filter" class="filter-input" placeholder="Filter files by path...">
+                </div>
+                <div id="files-list" class="files-list" style="display: none;">
+                    <!-- Files list will be inserted here -->
+                </div>
+            </div>
+        </div>
+
         <div id="handover-section" class="handover-section" style="display: none;">
             <h2 class="handover-title">💬 Handover Note</h2>
             <div id="handover-message" class="slack-message">
                 <!-- Handover message will be inserted here -->
             </div>
+        </div>
+        <!-- Snapshot Timeline Section -->
+        <div id="timeline-section" class="timeline-section" style="display: none;">
+            <h2 class="timeline-title">⏰ Saved Snapshots</h2>
+            <div class="timeline-container">
+                <div id="timeline" class="timeline">
+                    <!-- Timeline items will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Search Section -->
+        <div id="search-section" class="search-section" style="display: none;">
+            <h2 class="search-title">🔍 Search Your Code</h2>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search for classes, functions, or files...">
+                    <button id="search-button" class="search-button">Search</button>
+                </div>
+                <div id="search-results" class="search-results">
+                    <div class="search-empty">Enter a search term to find classes, functions, or files in your code</div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="graph-section" class="graph-section" style="display: none;">
+            <h2 class="graph-title">🕸️ Code Map</h2>
+            <div class="graph-container">
+                <div class="graph-controls">
+                    <div class="graph-control-group">
+                        <label for="node-filter">Show:</label>
+                        <select id="node-filter">
+                            <option value="all">Everything</option>
+                            <option value="class">Classes Only</option>
+                            <option value="function">Functions Only</option>
+                            <option value="dependency">Packages Only</option>
+                        </select>
+                    </div>
+                    <div class="graph-control-group">
+                        <label for="language-filter">Language:</label>
+                        <select id="language-filter">
+                            <option value="all">All Languages</option>
+                        </select>
+                    </div>
+                    <div class="graph-control-group">
+                        <label for="search-node">Search:</label>
+                        <input type="text" id="search-node" placeholder="Search nodes...">
+                    </div>
+                </div>
+                <svg id="graph-svg"></svg>
+                <div class="graph-stats">
+                    <div class="graph-stat">
+                        <span class="graph-stat-label">Code Items</span>
+                        <span class="graph-stat-value" id="total-nodes">0</span>
+                    </div>
+                    <div class="graph-stat">
+                        <span class="graph-stat-label">Connections</span>
+                        <span class="graph-stat-value" id="total-edges">0</span>
+                    </div>
+                    <div class="graph-stat">
+                        <span class="graph-stat-label">Classes</span>
+                        <span class="graph-stat-value" id="class-count">0</span>
+                    </div>
+                    <div class="graph-stat">
+                        <span class="graph-stat-label">Functions</span>
+                        <span class="graph-stat-value" id="function-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tooltip" id="graph-tooltip">
+            <div class="tooltip-title" id="tooltip-title"></div>
+            <div class="tooltip-content" id="tooltip-content"></div>
         </div>
 
         <footer>
@@ -326,6 +1050,7 @@
         // Configuration
         const MANIFEST_PATH = 'data/manifest.json';
         const HANDOVER_PATH = 'data/handover.json';
+        const THREAD_PATH = 'data/thread.json';
 
         // Section configuration with icons and styling
         const sections = [
@@ -363,6 +1088,10 @@
         const loadingEl = document.getElementById('loading');
         const errorContainerEl = document.getElementById('error-container');
         const dashboardEl = document.getElementById('dashboard');
+        const threadSectionEl = document.getElementById('thread-section');
+        const gitDiffEl = document.getElementById('git-diff');
+        const terminalLogEl = document.getElementById('terminal-log');
+        const filesListEl = document.getElementById('files-list');
         const handoverSectionEl = document.getElementById('handover-section');
         const handoverMessageEl = document.getElementById('handover-message');
         const timestampEl = document.getElementById('timestamp');
@@ -516,6 +1245,610 @@
             }
         }
 
+        // Toggle section visibility
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const toggleIcon = document.getElementById(sectionId.replace('-section', '-toggle'));
+            
+            if (section.classList.contains('collapsed')) {
+                section.classList.remove('collapsed');
+                toggleIcon.classList.remove('collapsed');
+            } else {
+                section.classList.add('collapsed');
+                toggleIcon.classList.add('collapsed');
+            }
+        }
+
+        // Copy content to clipboard
+        async function copyContent(elementId) {
+            const element = document.getElementById(elementId);
+            const button = event.currentTarget;
+            
+            try {
+                await navigator.clipboard.writeText(element.textContent);
+                button.classList.add('copied');
+                button.querySelector('span:last-child').textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.querySelector('span:last-child').textContent = 'Copy';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        }
+
+        // Filter functionality
+        function setupFilter(inputId, containerId) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+            
+            if (!input || !container) return;
+            
+            input.addEventListener('input', (e) => {
+                const filterText = e.target.value.toLowerCase();
+                const items = container.children;
+                
+                Array.from(items).forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(filterText) ? '' : 'none';
+                });
+            });
+        }
+
+        // Parse and display git diff with stats
+        function displayGitDiff(diffText) {
+            if (!diffText || diffText.trim() === '') {
+                gitDiffEl.style.display = 'none';
+                document.getElementById('git-diff-filter-container').style.display = 'none';
+                document.getElementById('git-diff-stats').style.display = 'none';
+                return;
+            }
+
+            gitDiffEl.style.display = 'block';
+            document.getElementById('git-diff-filter-container').style.display = 'flex';
+            gitDiffEl.innerHTML = '';
+
+            const lines = diffText.split('\n');
+            let addedLines = 0;
+            let removedLines = 0;
+            let filesChanged = 0;
+
+            lines.forEach(line => {
+                const span = document.createElement('span');
+                span.className = 'diff-line';
+
+                if (line.startsWith('diff --git')) {
+                    span.className = 'diff-line diff-file-header';
+                    span.textContent = line;
+                    filesChanged++;
+                } else if (line.startsWith('+') && !line.startsWith('+++')) {
+                    span.className = 'diff-line added';
+                    span.textContent = line;
+                    addedLines++;
+                } else if (line.startsWith('-') && !line.startsWith('---')) {
+                    span.className = 'diff-line removed';
+                    span.textContent = line;
+                    removedLines++;
+                } else {
+                    span.className = 'diff-line context';
+                    span.textContent = line;
+                }
+
+                gitDiffEl.appendChild(span);
+            });
+
+            // Display stats
+            const statsEl = document.getElementById('git-diff-stats');
+            statsEl.style.display = 'flex';
+            statsEl.innerHTML = `
+                <div class="stat-item">
+                    <span>📁 Files:</span>
+                    <span class="stat-value">${filesChanged}</span>
+                </div>
+                <div class="stat-item">
+                    <span style="color: var(--accent-nextstep)">+ Added:</span>
+                    <span class="stat-value" style="color: var(--accent-nextstep)">${addedLines}</span>
+                </div>
+                <div class="stat-item">
+                    <span style="color: var(--accent-error)">- Removed:</span>
+                    <span class="stat-value" style="color: var(--accent-error)">${removedLines}</span>
+                </div>
+            `;
+
+            // Setup filter
+            setupFilter('git-diff-filter', 'git-diff');
+        }
+
+        // Display terminal commands with stats
+        function displayTerminalLog(commands) {
+            if (!commands || commands.length === 0) {
+                terminalLogEl.style.display = 'none';
+                document.getElementById('terminal-filter-container').style.display = 'none';
+                document.getElementById('terminal-stats').style.display = 'none';
+                return;
+            }
+
+            terminalLogEl.style.display = 'block';
+            document.getElementById('terminal-filter-container').style.display = 'flex';
+            terminalLogEl.innerHTML = '';
+
+            commands.forEach(cmd => {
+                const span = document.createElement('span');
+                span.className = 'terminal-command';
+                span.textContent = cmd.replace(/\r?\n/g, '');
+                terminalLogEl.appendChild(span);
+            });
+
+            // Display stats
+            const statsEl = document.getElementById('terminal-stats');
+            statsEl.style.display = 'flex';
+            statsEl.innerHTML = `
+                <div class="stat-item">
+                    <span>💻 Commands:</span>
+                    <span class="stat-value">${commands.length}</span>
+                </div>
+            `;
+
+            // Setup filter
+            setupFilter('terminal-filter', 'terminal-log');
+        }
+
+        // Display modified files with stats
+        function displayFilesList(files) {
+            if (!files || files.length === 0) {
+                filesListEl.style.display = 'none';
+                document.getElementById('files-filter-container').style.display = 'none';
+                document.getElementById('files-stats').style.display = 'none';
+                return;
+            }
+
+            filesListEl.style.display = 'block';
+            document.getElementById('files-filter-container').style.display = 'flex';
+            filesListEl.innerHTML = '';
+
+            files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+
+                const path = document.createElement('span');
+                path.className = 'file-path';
+                path.textContent = file.relativePath || file.path;
+
+                const time = document.createElement('span');
+                time.className = 'file-time';
+                const modDate = new Date(file.modified);
+                time.textContent = modDate.toLocaleString();
+
+                item.appendChild(path);
+                item.appendChild(time);
+                filesListEl.appendChild(item);
+            });
+
+            // Display stats
+            const statsEl = document.getElementById('files-stats');
+            statsEl.style.display = 'flex';
+            statsEl.innerHTML = `
+                <div class="stat-item">
+                    <span>📁 Files Modified:</span>
+                    <span class="stat-value">${files.length}</span>
+                </div>
+            `;
+
+            // Setup filter
+            setupFilter('files-filter', 'files-list');
+        }
+
+        // Load and display thread data
+        async function loadThreadData() {
+            try {
+                const response = await fetch(THREAD_PATH);
+                
+                if (!response.ok) {
+                    threadSectionEl.style.display = 'none';
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Show thread section
+                threadSectionEl.style.display = 'block';
+
+                // Display git diff
+                displayGitDiff(data.gitDiff);
+
+                // Display terminal commands
+                displayTerminalLog(data.terminalLog);
+
+                // Display modified files
+                displayFilesList(data.openFiles);
+
+            } catch (error) {
+                console.error('Error loading thread data:', error);
+                threadSectionEl.style.display = 'none';
+            }
+        }
+
+        // Load and display code graph
+        // Load and display snapshot timeline
+        async function loadTimeline() {
+            try {
+                const response = await fetch('data/snapshots/index.json');
+                
+                if (!response.ok) {
+                    console.log('No snapshots available yet');
+                    return;
+                }
+
+                const data = await response.json();
+                const snapshots = data.snapshots || [];
+                
+                if (snapshots.length === 0) {
+                    return;
+                }
+
+                // Show timeline section
+                document.getElementById('timeline-section').style.display = 'block';
+                
+                const timeline = document.getElementById('timeline');
+                timeline.innerHTML = '';
+                
+                // Sort snapshots by timestamp (newest first)
+                snapshots.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                snapshots.forEach((snapshot, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item' + (index === 0 ? ' latest' : '');
+                    
+                    const date = new Date(snapshot.timestamp);
+                    const timeStr = date.toLocaleString();
+                    
+                    item.innerHTML = `
+                        <div class="timeline-header">
+                            <div class="timeline-time">${timeStr}</div>
+                            ${index === 0 ? '<span class="timeline-badge">LATEST</span>' : ''}
+                        </div>
+                        <div class="timeline-note">${snapshot.note || 'No note'}</div>
+                        <div class="timeline-stats">
+                            <div class="timeline-stat">
+                                <span>📁</span>
+                                <span>${snapshot.filesModified} files</span>
+                            </div>
+                            <div class="timeline-stat">
+                                <span>📦</span>
+                                <span>${snapshot.nodesCount} code items</span>
+                            </div>
+                            <div class="timeline-stat">
+                                <span>🔗</span>
+                                <span>${snapshot.edgesCount} connections</span>
+                            </div>
+                        </div>
+                        <div class="timeline-actions">
+                            <button class="timeline-button" onclick="viewSnapshot('${snapshot.timestamp}')">View</button>
+                            ${index !== 0 ? `<button class="timeline-button" onclick="restoreSnapshot('${snapshot.timestamp}')">Restore</button>` : ''}
+                        </div>
+                    `;
+                    
+                    timeline.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+            }
+        }
+
+        // View a specific snapshot
+        function viewSnapshot(timestamp) {
+            alert(`Viewing snapshot from ${new Date(timestamp).toLocaleString()}\n\nThis would show the code state at that time.`);
+        }
+
+        // Restore a snapshot
+        function restoreSnapshot(timestamp) {
+            if (confirm(`Restore snapshot from ${new Date(timestamp).toLocaleString()}?\n\nThis will replace your current state.`)) {
+                alert('To restore, run in terminal:\ntk restore ' + timestamp);
+            }
+        }
+
+        // Load and display code search
+        async function loadSearch() {
+            try {
+                const response = await fetch('data/graph.json');
+                
+                if (!response.ok) {
+                    console.log('No code data available yet');
+                    return;
+                }
+
+                const graphData = await response.json();
+                
+                // Show search section
+                document.getElementById('search-section').style.display = 'block';
+                
+                const searchButton = document.getElementById('search-button');
+                const searchInput = document.getElementById('search-input');
+                const searchResults = document.getElementById('search-results');
+                
+                function performSearch() {
+                    const query = searchInput.value.toLowerCase().trim();
+                    
+                    if (!query) {
+                        searchResults.innerHTML = '<div class="search-empty">Enter a search term to find classes, functions, or files in your code</div>';
+                        return;
+                    }
+                    
+                    // Search through all code items
+                    const results = graphData.nodes.filter(node => {
+                        return node.name.toLowerCase().includes(query) ||
+                               (node.file && node.file.toLowerCase().includes(query));
+                    });
+                    
+                    if (results.length === 0) {
+                        searchResults.innerHTML = '<div class="search-empty">No results found for "' + query + '"</div>';
+                        return;
+                    }
+                    
+                    // Display results
+                    searchResults.innerHTML = '';
+                    results.slice(0, 20).forEach(node => {
+                        const item = document.createElement('div');
+                        item.className = 'search-result-item';
+                        
+                        let typeLabel = node.type;
+                        if (node.type === 'class') typeLabel = 'Class';
+                        else if (node.type === 'function') typeLabel = 'Function';
+                        else if (node.type === 'dependency') typeLabel = 'Package';
+                        
+                        // Find what calls this and what it calls
+                        const callers = graphData.edges.filter(e => e.target === node.id).length;
+                        const callees = graphData.edges.filter(e => e.source === node.id).length;
+                        
+                        item.innerHTML = `
+                            <div class="search-result-header">
+                                <div class="search-result-name">${node.name}</div>
+                                <div class="search-result-type">${typeLabel}</div>
+                            </div>
+                            <div class="search-result-file">📄 ${node.file || 'External package'}</div>
+                            <div class="search-result-details">
+                                ${callers > 0 ? `Used by ${callers} other ${callers === 1 ? 'item' : 'items'}` : 'Not used yet'}
+                                ${callees > 0 ? ` • Uses ${callees} other ${callees === 1 ? 'item' : 'items'}` : ''}
+                            </div>
+                        `;
+                        
+                        searchResults.appendChild(item);
+                    });
+                    
+                    if (results.length > 20) {
+                        const more = document.createElement('div');
+                        more.className = 'search-empty';
+                        more.textContent = `Showing first 20 of ${results.length} results`;
+                        searchResults.appendChild(more);
+                    }
+                }
+                
+                searchButton.addEventListener('click', performSearch);
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') performSearch();
+                });
+                
+            } catch (error) {
+                console.error('Error loading search:', error);
+            }
+        }
+
+        async function loadCodeGraph() {
+            try {
+                const response = await fetch('data/graph.json');
+                
+                if (!response.ok) {
+                    console.log('No graph data available yet');
+                    return;
+                }
+
+                const graphData = await response.json();
+                
+                // Show graph section
+                document.getElementById('graph-section').style.display = 'block';
+                
+                // Update stats
+                document.getElementById('total-nodes').textContent = graphData.nodes.length;
+                document.getElementById('total-edges').textContent = graphData.edges.length;
+                document.getElementById('class-count').textContent = 
+                    graphData.nodes.filter(n => n.type === 'class').length;
+                document.getElementById('function-count').textContent = 
+                    graphData.nodes.filter(n => n.type === 'function').length;
+                
+                // Populate language filter
+                const languages = [...new Set(graphData.nodes.map(n => n.language).filter(Boolean))];
+                const languageFilter = document.getElementById('language-filter');
+                languages.forEach(lang => {
+                    const option = document.createElement('option');
+                    option.value = lang;
+                    option.textContent = lang.charAt(0).toUpperCase() + lang.slice(1);
+                    languageFilter.appendChild(option);
+                });
+                
+                // Render graph
+                renderGraph(graphData);
+                
+            } catch (error) {
+                console.error('Error loading graph data:', error);
+            }
+        }
+
+        // Render interactive force-directed graph
+        function renderGraph(graphData) {
+            try {
+                console.log('Rendering graph with', graphData.nodes.length, 'nodes and', graphData.edges.length, 'edges');
+                
+                const svg = d3.select('#graph-svg');
+                const width = svg.node().clientWidth || 1000;
+                const height = 600;
+                
+                console.log('SVG dimensions:', width, 'x', height);
+                
+                svg.selectAll('*').remove();
+                
+                const g = svg.append('g');
+            
+            // Add zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+            
+            svg.call(zoom);
+            
+                // Filter out edges that reference non-existent nodes
+                const nodeIds = new Set(graphData.nodes.map(n => n.id));
+                const validEdges = graphData.edges.filter(e => {
+                    const valid = nodeIds.has(e.source) && nodeIds.has(e.target);
+                    if (!valid) {
+                        console.warn('Skipping invalid edge:', e);
+                    }
+                    return valid;
+                });
+                
+                console.log('Valid edges:', validEdges.length, 'of', graphData.edges.length);
+                
+                // Create force simulation
+                const simulation = d3.forceSimulation(graphData.nodes)
+                    .force('link', d3.forceLink(validEdges)
+                        .id(d => d.id)
+                        .distance(100))
+                    .force('charge', d3.forceManyBody().strength(-300))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collision', d3.forceCollide().radius(30));
+            
+                // Create links
+                const link = g.append('g')
+                    .selectAll('line')
+                    .data(validEdges)
+                    .join('line')
+                    .attr('class', d => `link link-${d.type}`)
+                    .attr('stroke-width', 1.5);
+                
+                console.log('Created', link.size(), 'links');
+            
+                // Create nodes
+                const node = g.append('g')
+                    .selectAll('circle')
+                    .data(graphData.nodes)
+                    .join('circle')
+                    .attr('class', d => `node node-${d.type}`)
+                    .attr('r', d => d.type === 'class' ? 8 : d.type === 'function' ? 6 : 5)
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 2)
+                    .call(d3.drag()
+                        .on('start', dragstarted)
+                        .on('drag', dragged)
+                        .on('end', dragended));
+                
+                console.log('Created', node.size(), 'nodes');
+            
+                // Add labels
+                const label = g.append('g')
+                    .selectAll('text')
+                    .data(graphData.nodes)
+                    .join('text')
+                    .attr('class', 'node-label')
+                    .attr('dy', -12)
+                    .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
+                
+                console.log('Created', label.size(), 'labels');
+            
+                // Tooltip
+                const tooltip = d3.select('#graph-tooltip');
+                
+                node.on('mouseover', function(event, d) {
+                    d3.select(this).attr('stroke-width', 3);
+                    tooltip.classed('visible', true)
+                        .style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                    document.getElementById('tooltip-title').textContent = d.name;
+                    document.getElementById('tooltip-content').innerHTML = `
+                        <strong>Type:</strong> ${d.type}<br>
+                        <strong>File:</strong> ${d.file || 'External'}<br>
+                        ${d.language ? `<strong>Language:</strong> ${d.language}` : ''}
+                    `;
+                })
+                .on('mouseout', function() {
+                    d3.select(this).attr('stroke-width', 2);
+                    tooltip.classed('visible', false);
+                });
+                
+                // Update positions on simulation tick
+                simulation.on('tick', () => {
+                    link
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+                    
+                    node
+                        .attr('cx', d => d.x)
+                        .attr('cy', d => d.y);
+                    
+                    label
+                        .attr('x', d => d.x)
+                        .attr('y', d => d.y);
+                });
+                
+                // Drag functions
+                function dragstarted(event, d) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+                
+                function dragged(event, d) {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                }
+                
+                function dragended(event, d) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }
+                
+                // Filters
+                const nodeFilter = document.getElementById('node-filter');
+                const languageFilter = document.getElementById('language-filter');
+                const searchInput = document.getElementById('search-node');
+                
+                function applyFilters() {
+                    const nodeType = nodeFilter.value;
+                    const language = languageFilter.value;
+                    const searchTerm = searchInput.value.toLowerCase();
+                    
+                    node.style('opacity', d => {
+                        const typeMatch = nodeType === 'all' || d.type === nodeType;
+                        const langMatch = language === 'all' || d.language === language;
+                        const searchMatch = !searchTerm || d.name.toLowerCase().includes(searchTerm);
+                        return typeMatch && langMatch && searchMatch ? 1 : 0.1;
+                    });
+                    
+                    label.style('opacity', d => {
+                        const typeMatch = nodeType === 'all' || d.type === nodeType;
+                        const langMatch = language === 'all' || d.language === language;
+                        const searchMatch = !searchTerm || d.name.toLowerCase().includes(searchTerm);
+                        return typeMatch && langMatch && searchMatch ? 1 : 0.1;
+                    });
+                }
+                
+                nodeFilter.addEventListener('change', applyFilters);
+                languageFilter.addEventListener('change', applyFilters);
+                searchInput.addEventListener('input', applyFilters);
+                
+                console.log('Graph rendering complete');
+                
+            } catch (error) {
+                console.error('Error rendering graph:', error);
+                alert('Error rendering graph: ' + error.message);
+            }
+        }
+
         // Load and display manifest data
         async function loadDashboard() {
             try {
@@ -541,8 +1874,20 @@
                     dashboardEl.appendChild(card);
                 });
 
+                // Load thread data
+                await loadThreadData();
+
                 // Load handover note
                 await loadHandover();
+
+                // Load code graph
+                await loadCodeGraph();
+
+                // Load snapshot timeline
+                await loadTimeline();
+
+                // Load code search
+                await loadSearch();
 
                 // Update timestamp
                 const now = new Date();
