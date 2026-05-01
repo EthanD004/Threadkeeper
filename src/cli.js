@@ -86,6 +86,20 @@ program
         console.log('');
       }
       
+      // Create manifest object with the 4 key fields
+      const manifest = {
+        objective: 'What you were working on when you paused',
+        lastError: 'Most recent blocker or error encountered',
+        deadEnds: 'Approaches that didn\'t work',
+        nextStep: 'Concrete action to take next'
+      };
+      
+      // Save manifest to data/manifest.json
+      const manifestPath = path.join(process.cwd(), 'data', 'manifest.json');
+      await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+      console.log(`💾 Manifest saved to: ${manifestPath}`);
+      console.log('');
+      
       process.exit(0);
     } catch (error) {
       if (error.code === 'ENOENT') {

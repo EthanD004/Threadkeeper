@@ -1,0 +1,6 @@
+{
+  "objective": "What you were working on when you paused",
+  "lastError": "Most recent blocker or error encountered",
+  "deadEnds": "Approaches that didn't work",
+  "nextStep": "Concrete action to take next"
+}
