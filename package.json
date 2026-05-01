@@ -2,8 +2,12 @@
   "name": "threadkeeper",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "tk": "./src/cli.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mcp": "node src/mcp-server.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +22,8 @@
   "homepage": "https://github.com/EthanD004/Threadkeeper#readme",
   "description": "",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^14.0.3",
     "dotenv": "^17.4.2",
     "simple-git": "^3.36.0"
   }

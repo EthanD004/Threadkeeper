@@ -1,0 +1,89 @@
+{
+  "timestamp": "2026-05-01T16:23:45.282Z",
+  "note": "handover test",
+  "gitDiff": "diff --git a/data/thread.json b/data/thread.json\nindex e69de29..c15667d 100644\n--- a/data/thread.json\n+++ b/data/thread.json\n@@ -0,0 +1,119 @@\n+{\n+  \"timestamp\": \"2026-05-01T16:03:47.846Z\",\n+  \"note\": \"first test\",\n+  \"gitDiff\": \"diff --git a/data/thread.json b/data/thread.json\\nindex e69de29..4d0c1a2 100644\\n--- a/data/thread.json\\n+++ b/data/thread.json\\n@@ -0,0 +1,62 @@\\n+{\\n+  \\\"timestamp\\\": \\\"2026-05-01T15:11:01.812Z\\\",\\n+  \\\"note\\\": \\\"Testing\\\",\\n+  \\\"gitDiff\\\": \\\"diff --git a/data/thread.json b/data/thread.json\\\\nindex e69de29..6cefa7d 100644\\\\n--- a/data/thread.json\\\\n+++ b/data/thread.json\\\\n@@ -0,0 +1,62 @@\\\\n+{\\\\n+  \\\\\\\"timestamp\\\\\\\": \\\\\\\"2026-05-01T14:58:20.035Z\\\\\\\",\\\\n+  \\\\\\\"note\\\\\\\": \\\\\\\"testing mcp connection\\\\\\\",\\\\n+  \\\\\\\"gitDiff\\\\\\\": \\\\\\\"diff --git a/data/thread.json b/data/thread.json\\\\\\\\nindex e69de29..06ec76e 100644\\\\\\\\n--- a/data/thread.json\\\\\\\\n+++ b/data/thread.json\\\\\\\\n@@ -0,0 +1,44 @@\\\\\\\\n+{\\\\\\\\n+  \\\\\\\\\\\\\\\"timestamp\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"2026-05-01T14:39:55.511Z\\\\\\\\\\\\\\\",\\\\\\\\n+  \\\\\\\\\\\\\\\"note\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"Testing ThreadKeeper CLI\\\\\\\\\\\\\\\",\\\\\\\\n+  \\\\\\\\\\\\\\\"gitDiff\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\"diff --git a/node_modules/.package-lock.json b/node_modules/.package-lock.json\\\\\\\\\\\\\\\\nindex 05956f1..be75293 100644\\\\\\\\\\\\\\\\n--- a/node_modules/.package-lock.json\\\\\\\\\\\\\\\\n+++ b/node_modules/.package-lock.json\\\\\\\\\\\\\\\\n@@ -34,6 +34,15 @@\\\\\\\\\\\\\\\\n         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"@simple-git/args-pathspec\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"^1.0.3\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"\\\\\\\\\\\\\\\\n       }\\\\\\\\\\\\\\\\n     },\\\\\\\\\\\\\\\\n+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"node_modules/commander\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": {\\\\\\\\\\\\\\\\n+      \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"version\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"14.0.3\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n+      \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"resolved\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"https://registry.npmjs.org/commander/-/commander-14.0.3.tgz\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n+      \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"integrity\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n+      \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"license\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"MIT\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n+      \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"engines\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": {\\\\\\\\\\\\\\\\n+        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"node\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\">=20\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"\\\\\\\\\\\\\\\\n+      }\\\\\\\\\\\\\\\\n+    },\\\\\\\\\\\\\\\\n     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"node_modules/debug\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": {\\\\\\\\\\\\\\\\n       \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"version\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"4.4.3\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n       \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"resolved\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"https://registry.npmjs.org/debug/-/debug-4.4.3.tgz\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\ndiff --git a/package-lock.json b/package-lock.json\\\\\\\\\\\\\\\\nindex af50916..520ef99 100644\\\\\\\\\\\\\\\\n--- a/package-lock.json\\\\\\\\\\\\\\\\n+++ b/package-lock.json\\\\\\\\\\\\\\\\n@@ -9,6 +9,7 @@\\\\\\\\\\\\\\\\n       \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"version\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"1.0.0\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n       \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"license\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\": \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"ISC\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\n       \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"dependencies\n... (truncated)",
+  "terminalLog": [
+    "Move-Item src Threadkeeper\\src\r",
+    "Move-Item data Threadkeeper\\data\r",
+    "Remove-Item Threadkeeper -Recurse\r",
+    "cd \"C:\\Users\\ethans laptop\\Desktop\"\r",
+    "git clone https://github.com/EthanD004/Threadkeeper.git\r",
+    "cd Threadkeeper\r",
+    "mkdir src\r",
+    "mkdir data\r",
+    "mkdir ui\r",
+    "npm install simple-git dotenv\r",
+    "tk save --note \"testing mcp connection\"\r",
+    "tk save --note \"Testing\"\r",
+    " npm install\r",
+    "tk save \"first test\"\r",
+    "tk save --note \"first test\"\r",
+    "tk resume\r",
+    "tk install-hooks\r",
+    "run tk handover\r",
+    "tk handover\r",
+    "tk save --note \"handover test\"\r"
+  ],
+  "openFiles": [
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\src\\capture.js",
+      "relativePath": "src\\capture.js",
+      "modified": "2026-05-01T16:21:55.032Z",
+      "size": 5117
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\data\\thread.json",
+      "relativePath": "data\\thread.json",
+      "modified": "2026-05-01T16:03:47.851Z",
+      "size": 386919
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\package-lock.json",
+      "relativePath": "package-lock.json",
+      "modified": "2026-05-01T16:02:36.915Z",
+      "size": 44351
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\.bob\\mcp.json",
+      "relativePath": ".bob\\mcp.json",
+      "modified": "2026-05-01T16:00:22.966Z",
+      "size": 268
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\src\\mcp-server.js",
+      "relativePath": "src\\mcp-server.js",
+      "modified": "2026-05-01T15:59:45.858Z",
+      "size": 8484
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\src\\cli.js",
+      "relativePath": "src\\cli.js",
+      "modified": "2026-05-01T15:59:14.130Z",
+      "size": 6885
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\TEST_MCP.md",
+      "relativePath": "TEST_MCP.md",
+      "modified": "2026-05-01T15:15:07.665Z",
+      "size": 3034
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\MCP_SETUP.md",
+      "relativePath": "MCP_SETUP.md",
+      "modified": "2026-05-01T15:14:51.876Z",
+      "size": 3062
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\package.json",
+      "relativePath": "package.json",
+      "modified": "2026-05-01T14:48:04.216Z",
+      "size": 734
+    },
+    {
+      "path": "C:\\Users\\ethans laptop\\Desktop\\Threadkeeper\\README.md",
+      "relativePath": "README.md",
+      "modified": "2026-05-01T14:28:51.463Z",
+      "size": 0
+    }
+  ]
+}

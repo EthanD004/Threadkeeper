@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "threadkeeper": {
+      "command": "node",
+      "args": [
+        "src/mcp-server.js"
+      ],
+      "alwaysAllow": [
+        "save_thread",
+        "get_manifest",
+        "get_handover"
+      ]
+    }
+  }
+}
+
+// Made with Bob
