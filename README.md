@@ -334,7 +334,7 @@ ISC
 
 ## 👨‍💻 Author
 
-Built with IBM Bob
+Built`by Ethan Doyle and Ayonete with IBM Bob
 
 ---
 
