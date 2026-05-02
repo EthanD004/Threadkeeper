@@ -25,7 +25,6 @@
 
 6. **💬 Handover Note** - Slack-ready team message
 
----
 
 ## 💻 CLI Commands
 
