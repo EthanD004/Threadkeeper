@@ -4,787 +4,425 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Threadkeeper Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2a2a2a;
-            --text-primary: #e5e5e5;
-            --text-secondary: #a0a0a0;
-            --accent-objective: #3b82f6;
-            --accent-error: #ef4444;
-            --accent-deadends: #a855f7;
-            --accent-nextstep: #10b981;
-            --border-radius: 12px;
-            --spacing: 1.5rem;
+            --bg:            #ffffff;
+            --bg-card:       #ffffff;
+            --text-primary:  #111827;
+            --text-secondary:#6b7280;
+            --border:        #e5e7eb;
+            --accent-blue:   #2563eb;
+            --accent-green:  #059669;
+            --accent-error:  #dc2626;
+            --accent-purple: #7c3aed;
+            --radius:        10px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background-color: var(--bg-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
             color: var(--text-primary);
-            line-height: 1.6;
-            padding: 2rem;
+            line-height: 1.5;
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
+        /* ── Header ── */
+        .page-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
             text-align: center;
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid var(--bg-secondary);
+            padding: 1.5rem 0;
+            margin-bottom: 1.75rem;
         }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--accent-objective), var(--accent-nextstep));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            font-family: 'Courier New', monospace;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing);
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            border-left: 4px solid;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            opacity: 0.3;
-        }
-
-        .card.objective {
-            border-left-color: var(--accent-objective);
-        }
-
-        .card.objective::before {
-            background: var(--accent-objective);
-        }
-
-        .card.error {
-            border-left-color: var(--accent-error);
-        }
-
-        .card.error::before {
-            background: var(--accent-error);
-        }
-
-        .card.deadends {
-            border-left-color: var(--accent-deadends);
-        }
-
-        .card.deadends::before {
-            background: var(--accent-deadends);
-        }
-
-        .card.nextstep {
-            border-left-color: var(--accent-nextstep);
-        }
-
-        .card.nextstep::before {
-            background: var(--accent-nextstep);
-        }
-
-        .card-header {
-            display: flex;
+        .logo {
+            display: inline-flex;
             align-items: center;
-            margin-bottom: 1rem;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+
+        .logo-img { height: 22px; }
+
+        .logo-wordmark {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .logo-wordmark span { color: var(--accent-blue); }
+
+        /* ── Two-column layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+            max-width: 1260px;
+            margin: 0 auto;
+            padding: 0 1.5rem 2.5rem;
+            align-items: start;
+        }
+
+        /* Prevent grid blowout from pre-formatted content */
+        .layout > main { min-width: 0; }
+
+        /* ── Loading / Error ── */
+        #loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            max-width: 1260px;
+            margin: 0 auto;
+            padding-left: 1.5rem;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid var(--accent-error);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            color: var(--accent-error);
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* ── Top 3 cards ── */
+        .top-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-column {
+            display: flex;
+            flex-direction: column;
             gap: 0.75rem;
         }
 
-        .card-icon {
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .column-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .card.objective .card-title {
-            color: var(--accent-objective);
-        }
-
-        .card.error .card-title {
-            color: var(--accent-error);
-        }
-
-        .card.deadends .card-title {
-            color: var(--accent-deadends);
-        }
-
-        .card.nextstep .card-title {
-            color: var(--accent-nextstep);
-        }
-
-        .card-content {
             color: var(--text-primary);
-            font-size: 1rem;
-            line-height: 1.7;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-blue);
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .data-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+        }
+
+        .data-card-content {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
 
-        .card-content.empty {
+        .data-card-content.empty { font-style: italic; }
+
+        /* ── Quick Look shell ── */
+        .quick-look {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .quick-look-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem 0;
+        }
+
+        .quick-look-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .generate-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.875rem;
+            border: 1px solid var(--accent-green);
+            border-radius: 6px;
+            color: var(--accent-green);
+            background: transparent;
+            font-size: 0.78rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .generate-btn:hover {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        /* ── Tab bar ── */
+        .tab-bar {
+            display: flex;
+            padding: 0 1.25rem;
+            border-bottom: 1px solid var(--border);
+            margin-top: 0.875rem;
+        }
+
+        .tab {
+            padding: 0.55rem 0.875rem;
+            font-size: 0.8rem;
+            font-family: inherit;
             color: var(--text-secondary);
-            font-style: italic;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+            white-space: nowrap;
         }
 
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
+        .tab:hover { color: var(--text-primary); }
+
+        .tab.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+            font-weight: 500;
         }
 
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
+        /* ── Tab panels ── */
+        .tab-content { padding: 1.25rem; }
 
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
-        .error-message {
-            background-color: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--accent-error);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            margin: 2rem 0;
-            color: var(--accent-error);
-            text-align: center;
-        }
-
-        .thread-section {
-            margin-top: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .thread-title {
-            font-size: 1.5rem;
-            font-weight: 600;
+        /* ── Filter bar ── */
+        .filter-bar {
+            display: flex;
+            gap: 0.625rem;
             margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
             color: var(--text-primary);
+            background: var(--bg);
+            transition: border-color 0.15s;
         }
 
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .filter-input::placeholder { color: var(--text-secondary); }
+
+        /* ── Copy button ── */
+        .copy-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.875rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-family: inherit;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .copy-button:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .copy-button.copied {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 0.875rem;
+            padding: 0.55rem 0.75rem;
+            background: var(--bg);
+            border-radius: 6px;
+            font-size: 0.78rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value { color: var(--accent-blue); font-weight: 600; }
+
+        /* ── Diff viewer ── */
         .diff-viewer {
-            background-color: #1e1e1e;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            overflow-x: auto;
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
             font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             line-height: 1.5;
-            max-height: 500px;
-            overflow-y: auto;
+            max-height: 480px;
+            overflow: auto;
         }
 
-        .diff-line {
-            display: block;
-            padding: 2px 0;
-            white-space: pre;
-        }
+        .diff-line { display: block; padding: 1px 4px; white-space: pre; }
+        .diff-line.added    { background: rgba(5,150,105,0.08);  color: #065f46; }
+        .diff-line.removed  { background: rgba(220,38,38,0.08);  color: #991b1b; }
+        .diff-line.context  { color: #374151; }
+        .diff-file-header   { color: var(--accent-blue); font-weight: 600; margin-top: 0.75rem; display: block; white-space: pre; padding: 1px 4px; }
 
-        .diff-line.added {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-        }
-
-        .diff-line.removed {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-
-        .diff-line.context {
-            color: var(--text-secondary);
-        }
-
-        .diff-file-header {
-            color: var(--accent-objective);
-            font-weight: 600;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
+        /* ── Terminal log ── */
         .terminal-log {
-            background-color: #1e1e1e;
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            overflow-x: auto;
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
             font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             line-height: 1.8;
-            max-height: 300px;
-            overflow-y: auto;
+            max-height: 320px;
+            overflow: auto;
         }
 
-        .terminal-command {
-            color: #10b981;
-            display: block;
-            padding: 2px 0;
-        }
+        .terminal-command { color: #065f46; display: block; padding: 1px 0; }
+        .terminal-command::before { content: '$ '; color: #6b7280; }
 
-        .terminal-command::before {
-            content: '$ ';
-            color: var(--text-secondary);
-        }
-
+        /* ── Files list (tab panel) ── */
         .files-list {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         .file-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.625rem 0.875rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
         }
 
-        .file-item:last-child {
-            border-bottom: none;
-        }
+        .file-item:last-child { border-bottom: none; }
+        .file-path { font-family: 'Courier New', monospace; color: var(--text-primary); }
+        .file-time { color: var(--text-secondary); font-size: 0.75rem; }
 
-        .file-path {
-            color: var(--text-primary);
-            font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-        }
-
-        .file-time {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-        }
-
-        .handover-section {
-            margin-top: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .handover-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .slack-message {
-            background-color: #36393f;
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            display: flex;
-            gap: 1rem;
-            transition: background-color 0.2s ease;
-        }
-
-        .slack-message:hover {
-            background-color: #3a3d44;
-        }
-
-        .slack-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .slack-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .slack-header {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .slack-username {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-        }
-
-        .slack-timestamp {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .slack-message-text {
-            color: var(--text-primary);
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .slack-message-text.empty {
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .filter-container {
-            margin-bottom: 1rem;
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .filter-input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background-color: var(--bg-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            font-family: 'Courier New', monospace;
-            transition: border-color 0.2s ease;
-        }
-
-        .filter-input:focus {
-            outline: none;
-            border-color: var(--accent-objective);
-        }
-
-        .filter-input::placeholder {
-            color: var(--text-secondary);
-        }
-
-        .copy-button {
-            padding: 0.5rem 1rem;
-            background-color: var(--bg-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .copy-button:hover {
-            background-color: var(--accent-objective);
-            border-color: var(--accent-objective);
-        }
-
-        .copy-button.copied {
-            background-color: var(--accent-nextstep);
-            border-color: var(--accent-nextstep);
-        }
-
-        .section-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            user-select: none;
-            padding: 0.5rem 0;
-            margin-bottom: 1rem;
-        }
-
-        .section-toggle:hover .thread-title {
-            color: var(--accent-objective);
-        }
-
-        .toggle-icon {
-            font-size: 1.25rem;
-            transition: transform 0.3s ease;
-            color: var(--text-secondary);
-        }
-
-        .toggle-icon.collapsed {
-            transform: rotate(-90deg);
-        }
-
-        .section-content {
-            max-height: 1000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease, opacity 0.3s ease;
-            opacity: 1;
-        }
-
-        .section-content.collapsed {
-            max-height: 0;
-            opacity: 0;
-        }
-
-        .stats-bar {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            font-size: 0.875rem;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-        }
-
-        .stat-value {
-            color: var(--accent-objective);
-            font-weight: 600;
-        }
-
-        #graph-svg {
-            width: 100%;
-            height: 600px;
-            border-radius: 8px;
-            background-color: var(--bg-primary);
-        }
-
-        .graph-section {
-            margin-top: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .graph-title {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .graph-container {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            min-height: 600px;
-            position: relative;
-        }
-
+        /* ── Code Map controls ── */
         .graph-controls {
             display: flex;
             gap: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.875rem;
             flex-wrap: wrap;
         }
 
         .graph-control-group {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
+            font-size: 0.8rem;
         }
 
-        .graph-control-group label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
+        .graph-control-group label { color: var(--text-secondary); }
 
         .graph-control-group select,
         .graph-control-group input {
-            background-color: var(--bg-primary);
+            background: var(--bg);
             color: var(--text-primary);
-            border: 1px solid var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+
+        #graph-svg {
+            width: 100%;
+            height: 500px;
             border-radius: 6px;
-            padding: 0.5rem;
-            font-size: 0.9rem;
+            background: #f9fafb;
+            border: 1px solid var(--border);
         }
 
         .graph-stats {
             display: flex;
             gap: 2rem;
-            margin-top: 1rem;
-            padding: 1rem;
-            background-color: var(--bg-primary);
-            border-radius: 8px;
+            margin-top: 0.875rem;
+            padding: 0.875rem;
+            background: var(--bg);
+            border-radius: 6px;
         }
 
-        .graph-stat {
-            display: flex;
-            flex-direction: column;
-        }
+        .graph-stat { display: flex; flex-direction: column; }
+        .graph-stat-label { color: var(--text-secondary); font-size: 0.75rem; }
+        .graph-stat-value { font-size: 1.25rem; font-weight: 600; }
 
-        .graph-stat-label {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
+        /* ── D3 node/link ── */
+        .node { cursor: pointer; }
+        .node-class      { fill: var(--accent-blue); }
+        .node-function   { fill: var(--accent-green); }
+        .node-dependency { fill: var(--accent-purple); }
+        .link            { stroke: #9ca3af; stroke-opacity: 0.6; stroke-width: 1.5px; }
+        .link-extends    { stroke: #ef4444; stroke-opacity: 0.5; }
+        .link-calls      { stroke: var(--accent-blue); stroke-opacity: 0.4; }
+        .node-label      { fill: #111827; font-size: 10px; pointer-events: none; text-anchor: middle; }
 
-        .graph-stat-value {
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .node {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .node:hover {
-            stroke-width: 3px;
-        }
-
-        .node-class {
-            fill: var(--accent-objective);
-        }
-
-        .node-function {
-            fill: var(--accent-nextstep);
-        }
-
-        .node-dependency {
-            fill: var(--accent-deadends);
-        }
-
-        .link {
-            stroke: var(--text-secondary);
-            stroke-opacity: 0.3;
-            stroke-width: 1.5px;
-        }
-
-        .link-extends {
-            stroke: var(--accent-error);
-            stroke-opacity: 0.5;
-        }
-
-        .link-calls {
-            stroke: var(--accent-objective);
-            stroke-opacity: 0.4;
-        }
-
-        .node-label {
-            fill: var(--text-primary);
-            font-size: 10px;
-            pointer-events: none;
-            text-anchor: middle;
-        }
-
+        /* ── Tooltip ── */
         .tooltip {
             position: absolute;
-            background-color: var(--bg-primary);
-            border: 1px solid var(--text-secondary);
+            background: #111827;
+            color: #f9fafb;
             border-radius: 6px;
-            padding: 0.75rem;
+            padding: 0.625rem 0.875rem;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.15s;
             z-index: 1000;
-            max-width: 300px;
+            max-width: 280px;
+            font-size: 0.8rem;
         }
 
-        .tooltip.visible {
-            opacity: 1;
-        }
+        .tooltip.visible { opacity: 1; }
+        .tooltip-title { font-weight: 600; margin-bottom: 0.35rem; }
 
-        .tooltip-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .tooltip-content {
-            font-size: 0.85rem;
-        /* Snapshot Timeline Styles */
-        .timeline-section {
-            margin-top: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .timeline-title {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .timeline-container {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-        }
-
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(to bottom, var(--accent-objective), var(--accent-nextstep));
-        }
-
-        .timeline-item {
-            position: relative;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background-color: var(--bg-primary);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .timeline-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .timeline-item.latest {
-            border-left: 3px solid var(--accent-nextstep);
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -2.5rem;
-            top: 1.5rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background-color: var(--accent-objective);
-            border: 2px solid var(--bg-secondary);
-        }
-
-        .timeline-item.latest::before {
-            background-color: var(--accent-nextstep);
-            box-shadow: 0 0 10px var(--accent-nextstep);
-        }
-
-        .timeline-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-time {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .timeline-badge {
-            background-color: var(--accent-nextstep);
-            color: var(--bg-primary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .timeline-note {
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-stats {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .timeline-stat {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .timeline-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .timeline-button {
-            padding: 0.25rem 0.75rem;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--text-secondary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-
-        .timeline-button:hover {
-            background-color: var(--accent-objective);
-            border-color: var(--accent-objective);
-        }
-
-        /* Code Search Styles */
-        .search-section {
-            margin-top: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .search-title {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .search-container {
-            background-color: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-        }
-
+        /* ── Code search ── */
         .search-box {
             display: flex;
             gap: 0.5rem;
@@ -793,418 +431,636 @@
 
         .search-input {
             flex: 1;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            border: 1px solid var(--text-secondary);
+            padding: 0.6rem 0.875rem;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 0.75rem;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--bg);
+            color: var(--text-primary);
         }
 
+        .search-input:focus { outline: none; border-color: var(--accent-blue); }
+
         .search-button {
-            padding: 0.75rem 1.5rem;
-            background-color: var(--accent-objective);
+            padding: 0.6rem 1.25rem;
+            background: var(--accent-blue);
             color: white;
             border: none;
             border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.875rem;
+            font-family: inherit;
             font-weight: 600;
-            transition: all 0.2s ease;
+            cursor: pointer;
+            transition: background 0.15s;
         }
 
-        .search-button:hover {
-            background-color: var(--accent-nextstep);
-        }
-
-        .search-results {
-            margin-top: 1rem;
-        }
+        .search-button:hover { background: #1d4ed8; }
 
         .search-result-item {
-            background-color: var(--bg-primary);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            border-left: 3px solid var(--accent-objective);
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 0.875rem;
+            margin-bottom: 0.625rem;
+            border-left: 3px solid var(--accent-blue);
         }
 
         .search-result-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.35rem;
         }
 
-        .search-result-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+        .search-result-name { font-size: 0.95rem; font-weight: 600; }
 
         .search-result-type {
-            padding: 0.25rem 0.5rem;
-            background-color: var(--accent-objective);
+            padding: 0.2rem 0.4rem;
+            background: var(--accent-blue);
             color: white;
-            border-radius: 4px;
-            font-size: 0.75rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
         }
 
-        .search-result-file {
-            color: var(--text-secondary);
+        .search-result-file   { color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.35rem; }
+        .search-result-details{ color: var(--text-secondary); font-size: 0.8rem; }
+        .search-empty         { text-align: center; color: var(--text-secondary); padding: 1.5rem; font-size: 0.85rem; }
+
+        /* ── Handover note ── */
+        .handover-wrapper {
+            margin-top: 1.25rem;
+        }
+
+        .handover-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .slack-message {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            display: flex;
+            gap: 0.875rem;
+        }
+
+        .slack-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .slack-content { flex: 1; min-width: 0; }
+
+        .slack-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .slack-username  { font-weight: 600; font-size: 0.9rem; }
+        .slack-timestamp { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .slack-message-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .slack-message-text.empty { color: var(--text-secondary); font-style: italic; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: sticky;
+            top: 1.5rem;
+        }
+
+        .sidebar-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.125rem;
+        }
+
+        .sidebar-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+            font-weight: 800;
+            /* letter-spacing: 0.1em; */
+            /* text-transform: uppercase; */
+            margin-bottom: 0.875rem;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .sidebar-label.errors  { color: var(--accent-error); }
+        .sidebar-label.neutral { color: var(--text-primary); }
+
+        .sidebar-icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            padding: 0;
+            transition: color 0.15s;
+        }
+
+        .sidebar-icon-btn:hover { color: var(--text-primary); }
+
+        /* Error card */
+        .error-card {
+            background: #fef2f2;
+            border-radius: 6px;
+            padding: 0.875rem;
+            font-size: 0.8rem;
+            color: #7f1d1d;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error-card-empty {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Sidebar file list */
+        .sidebar-files-scroll {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .sidebar-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid var(--border);
+            gap: 0.5rem;
+        }
+
+        .sidebar-file-item:last-child { border-bottom: none; }
+
+        .sidebar-file-path {
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .sidebar-file-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Snapshot timeline thread */
+        /* #timeline {
+            position: relative;
+            padding-left: 14px;
+        }
+
+        #timeline::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        } */
+
+        /* Snapshot cards */
+        .snapshot-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .snapshot-card:last-child { margin-bottom: 0; }
+
+        .snapshot-time {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.35rem;
+        }
+
+        .snapshot-badge {
+            background: var(--accent-green);
+            color: white;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            letter-spacing: 0.05em;
+        }
+
+        .snapshot-note {
+            font-size: 0.8rem;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
 
-        .search-result-details {
+        .snapshot-stats {
+            display: flex;
+            gap: 0.875rem;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            align-items: center;
+        }
+
+        .snapshot-actions {
+            display: inline-flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .snapshot-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
             color: var(--text-secondary);
             font-size: 0.85rem;
+            padding: 0;
+            transition: color 0.15s;
+            line-height: 1;
         }
 
-        .search-empty {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 2rem;
-        }
+        .snapshot-btn:hover { color: var(--accent-blue); }
 
-            color: var(--text-secondary);
-        }
-
+        /* ── Footer ── */
         footer {
             text-align: center;
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 2px solid var(--bg-secondary);
+            padding: 1.25rem;
+            border-top: 1px solid var(--border);
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            background: var(--bg-card);
+            margin-top: 0.5rem;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; }
+            .top-cards { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🧵 Threadkeeper</h1>
-            <p class="subtitle">Developer Context Dashboard</p>
-        </header>
 
-        <div id="loading" class="loading">Loading dashboard</div>
-        <div id="error-container"></div>
-        <div id="dashboard" class="dashboard" style="display: none;"></div>
+    <header class="page-header">
+        <a class="logo" href="#">
+            <img src="logo.png" alt="" class="logo-img" onerror="this.style.display='none'">
+            <span class="logo-wordmark">Thread<span>keeper</span></span>
+        </a>
+    </header>
 
-        <div id="thread-section" class="thread-section" style="display: none;">
-            <!-- Git Diff Section -->
-            <div class="section-toggle" onclick="toggleSection('git-diff-section')">
-                <h2 class="thread-title">📝 Recent Changes</h2>
-                <span class="toggle-icon" id="git-diff-toggle">▼</span>
+    <div id="loading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading dashboard...
+    </div>
+    <div id="error-container"></div>
+
+    <div class="layout">
+
+        <!-- ── Main column ── -->
+        <main>
+
+            <!-- Top 3 data cards -->
+            <div id="top-cards" class="top-cards" style="display: none;">
+                <div class="section-column">
+                    <div class="column-label">Objectives</div>
+                    <div id="card-objective"></div>
+                </div>
+                <div class="section-column">
+                    <div class="column-label">Next Step</div>
+                    <div id="card-nextstep"></div>
+                </div>
+                <div class="section-column">
+                    <div class="column-label">Dead Ends</div>
+                    <div id="card-deadends"></div>
+                </div>
             </div>
-            <div id="git-diff-section" class="section-content">
-                <div id="git-diff-stats" class="stats-bar" style="display: none;"></div>
-                <div class="filter-container" id="git-diff-filter-container" style="display: none;">
-                    <input type="text" id="git-diff-filter" class="filter-input" placeholder="Filter changes (e.g., filename, +added, -removed)...">
-                    <button class="copy-button" onclick="copyContent('git-diff')">
-                        <span>📋</span>
-                        <span>Copy</span>
+
+            <!-- Quick Look -->
+            <div id="thread-section" class="quick-look" style="display: none;">
+                <div class="quick-look-header">
+                    <span class="quick-look-title">Quick Look</span>
+                    <button class="generate-btn" onclick="generateHandover()">
+                        <i class="fa-regular fa-file-lines"></i>
+                        Generate Handover Note
                     </button>
                 </div>
-                <div id="git-diff" class="diff-viewer" style="display: none;">
-                    <!-- Git diff will be inserted here -->
+                <div class="tab-bar">
+                    <button class="tab active" onclick="switchTab(this, 'recent-changes')">Recent Changes</button>
+                    <button class="tab" onclick="switchTab(this, 'terminal-history')">Terminal History</button>
+                    <button class="tab" onclick="switchTab(this, 'code-map')">Code Map</button>
+                    <button class="tab" onclick="switchTab(this, 'modified-files')">Modified Files</button>
+                </div>
+                <div class="tab-content">
+
+                    <!-- Recent Changes panel -->
+                    <div id="panel-recent-changes" class="tab-panel active">
+                        <div id="git-diff-stats" class="stats-bar" style="display: none;"></div>
+                        <div class="filter-bar" id="git-diff-filter-container" style="display: none;">
+                            <input type="text" id="git-diff-filter" class="filter-input"
+                                   placeholder="Filter changes (e.g., filename, +added, -removed)...">
+                            <button class="copy-button" onclick="copyContent('git-diff')">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <div id="git-diff" class="diff-viewer" style="display: none;"></div>
+                    </div>
+
+                    <!-- Terminal History panel -->
+                    <div id="panel-terminal-history" class="tab-panel">
+                        <div id="terminal-stats" class="stats-bar" style="display: none;"></div>
+                        <div class="filter-bar" id="terminal-filter-container" style="display: none;">
+                            <input type="text" id="terminal-filter" class="filter-input"
+                                   placeholder="Filter commands...">
+                            <button class="copy-button" onclick="copyContent('terminal-log')">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <div id="terminal-log" class="terminal-log" style="display: none;"></div>
+                    </div>
+
+                    <!-- Code Map panel -->
+                    <div id="panel-code-map" class="tab-panel">
+                        <div id="graph-section">
+                            <div class="graph-controls">
+                                <div class="graph-control-group">
+                                    <label for="node-filter">Show:</label>
+                                    <select id="node-filter">
+                                        <option value="all">Everything</option>
+                                        <option value="class">Classes Only</option>
+                                        <option value="function">Functions Only</option>
+                                        <option value="dependency">Packages Only</option>
+                                    </select>
+                                </div>
+                                <div class="graph-control-group">
+                                    <label for="language-filter">Language:</label>
+                                    <select id="language-filter">
+                                        <option value="all">All Languages</option>
+                                    </select>
+                                </div>
+                                <div class="graph-control-group">
+                                    <label for="search-node">Search:</label>
+                                    <input type="text" id="search-node" placeholder="Search nodes...">
+                                </div>
+                            </div>
+                            <svg id="graph-svg"></svg>
+                            <div class="graph-stats">
+                                <div class="graph-stat">
+                                    <span class="graph-stat-label">Code Items</span>
+                                    <span class="graph-stat-value" id="total-nodes">0</span>
+                                </div>
+                                <div class="graph-stat">
+                                    <span class="graph-stat-label">Connections</span>
+                                    <span class="graph-stat-value" id="total-edges">0</span>
+                                </div>
+                                <div class="graph-stat">
+                                    <span class="graph-stat-label">Classes</span>
+                                    <span class="graph-stat-value" id="class-count">0</span>
+                                </div>
+                                <div class="graph-stat">
+                                    <span class="graph-stat-label">Functions</span>
+                                    <span class="graph-stat-value" id="function-count">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="search-section" style="display: none; margin-top: 1.5rem;">
+                            <h3 style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search Your Code
+                            </h3>
+                            <div class="search-box">
+                                <input type="text" id="search-input" class="search-input"
+                                       placeholder="Search for classes, functions, or files...">
+                                <button id="search-button" class="search-button">Search</button>
+                            </div>
+                            <div id="search-results">
+                                <div class="search-empty">Enter a search term to find classes, functions, or files</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modified Files panel -->
+                    <div id="panel-modified-files" class="tab-panel">
+                        <div id="files-stats" class="stats-bar" style="display: none;"></div>
+                        <div class="filter-bar" id="files-filter-container" style="display: none;">
+                            <input type="text" id="files-filter" class="filter-input"
+                                   placeholder="Filter files by path...">
+                        </div>
+                        <div id="files-list" class="files-list" style="display: none;"></div>
+                    </div>
+
                 </div>
             </div>
-            
-            <!-- Terminal Commands Section -->
-            <div class="section-toggle" onclick="toggleSection('terminal-section')" style="margin-top: 2rem;">
-                <h2 class="thread-title">💻 Terminal Commands</h2>
-                <span class="toggle-icon" id="terminal-toggle">▼</span>
+
+            <!-- Handover note (revealed by Generate button) -->
+            <div id="handover-section" class="handover-wrapper" style="display: none;">
+                <div class="handover-label">
+                    <i class="fa-regular fa-message"></i> Handover Note
+                </div>
+                <div id="handover-message" class="slack-message"></div>
             </div>
-            <div id="terminal-section" class="section-content">
-                <div id="terminal-stats" class="stats-bar" style="display: none;"></div>
-                <div class="filter-container" id="terminal-filter-container" style="display: none;">
-                    <input type="text" id="terminal-filter" class="filter-input" placeholder="Filter commands...">
-                    <button class="copy-button" onclick="copyContent('terminal-log')">
-                        <span>📋</span>
-                        <span>Copy</span>
+
+        </main>
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar">
+
+            <div class="sidebar-section">
+                <div class="sidebar-label errors">
+                    <span><i class="fa-solid fa-triangle-exclamation"></i>&nbsp; Last Errors</span>
+                    <button class="sidebar-icon-btn" onclick="copySidebarError()" title="Copy error">
+                        <i class="fa-regular fa-copy"></i>
                     </button>
                 </div>
-                <div id="terminal-log" class="terminal-log" style="display: none;">
-                    <!-- Terminal commands will be inserted here -->
-                </div>
+                <div id="sidebar-error-content"></div>
             </div>
-            
-            <!-- Files Section -->
-            <div class="section-toggle" onclick="toggleSection('files-section')" style="margin-top: 2rem;">
-                <h2 class="thread-title">📁 Modified Files</h2>
-                <span class="toggle-icon" id="files-toggle">▼</span>
-            </div>
-            <div id="files-section" class="section-content">
-                <div id="files-stats" class="stats-bar" style="display: none;"></div>
-                <div class="filter-container" id="files-filter-container" style="display: none;">
-                    <input type="text" id="files-filter" class="filter-input" placeholder="Filter files by path...">
-                </div>
-                <div id="files-list" class="files-list" style="display: none;">
-                    <!-- Files list will be inserted here -->
-                </div>
-            </div>
-        </div>
 
-        <div id="handover-section" class="handover-section" style="display: none;">
-            <h2 class="handover-title">💬 Handover Note</h2>
-            <div id="handover-message" class="slack-message">
-                <!-- Handover message will be inserted here -->
-            </div>
-        </div>
-        <!-- Snapshot Timeline Section -->
-        <div id="timeline-section" class="timeline-section" style="display: none;">
-            <h2 class="timeline-title">⏰ Saved Snapshots</h2>
-            <div class="timeline-container">
-                <div id="timeline" class="timeline">
-                    <!-- Timeline items will be inserted here -->
+            <div class="sidebar-section">
+                <div class="sidebar-label neutral">
+                    <span><i class="fa-regular fa-folder-open"></i>&nbsp; Modified Files</span>
+                </div>
+                <div class="sidebar-files-scroll">
+                    <div id="sidebar-files"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Code Search Section -->
-        <div id="search-section" class="search-section" style="display: none;">
-            <h2 class="search-title">🔍 Search Your Code</h2>
-            <div class="search-container">
-                <div class="search-box">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search for classes, functions, or files...">
-                    <button id="search-button" class="search-button">Search</button>
+            <div id="timeline-section" class="sidebar-section" style="display: none;">
+                <div class="sidebar-label neutral">
+                    <span><i class="fa-regular fa-clock"></i>&nbsp; Snapshots</span>
+                    <button class="sidebar-icon-btn" title="Sort">
+                        <i class="fa-solid fa-arrow-up-arrow-down"></i>
+                    </button>
                 </div>
-                <div id="search-results" class="search-results">
-                    <div class="search-empty">Enter a search term to find classes, functions, or files in your code</div>
-                </div>
+                <div id="timeline"></div>
             </div>
-        </div>
 
-
-        <div id="graph-section" class="graph-section" style="display: none;">
-            <h2 class="graph-title">🕸️ Code Map</h2>
-            <div class="graph-container">
-                <div class="graph-controls">
-                    <div class="graph-control-group">
-                        <label for="node-filter">Show:</label>
-                        <select id="node-filter">
-                            <option value="all">Everything</option>
-                            <option value="class">Classes Only</option>
-                            <option value="function">Functions Only</option>
-                            <option value="dependency">Packages Only</option>
-                        </select>
-                    </div>
-                    <div class="graph-control-group">
-                        <label for="language-filter">Language:</label>
-                        <select id="language-filter">
-                            <option value="all">All Languages</option>
-                        </select>
-                    </div>
-                    <div class="graph-control-group">
-                        <label for="search-node">Search:</label>
-                        <input type="text" id="search-node" placeholder="Search nodes...">
-                    </div>
-                </div>
-                <svg id="graph-svg"></svg>
-                <div class="graph-stats">
-                    <div class="graph-stat">
-                        <span class="graph-stat-label">Code Items</span>
-                        <span class="graph-stat-value" id="total-nodes">0</span>
-                    </div>
-                    <div class="graph-stat">
-                        <span class="graph-stat-label">Connections</span>
-                        <span class="graph-stat-value" id="total-edges">0</span>
-                    </div>
-                    <div class="graph-stat">
-                        <span class="graph-stat-label">Classes</span>
-                        <span class="graph-stat-value" id="class-count">0</span>
-                    </div>
-                    <div class="graph-stat">
-                        <span class="graph-stat-label">Functions</span>
-                        <span class="graph-stat-value" id="function-count">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="tooltip" id="graph-tooltip">
-            <div class="tooltip-title" id="tooltip-title"></div>
-            <div class="tooltip-content" id="tooltip-content"></div>
-        </div>
-
-        <footer>
-            <p>Threadkeeper Dashboard • Last updated: <span id="timestamp"></span></p>
-        </footer>
+        </aside>
     </div>
 
+    <!-- Kept in DOM so existing JS variable references don't throw -->
+    <div id="dashboard" style="display: none;"></div>
+
+    <div class="tooltip" id="graph-tooltip">
+        <div class="tooltip-title" id="tooltip-title"></div>
+        <div class="tooltip-content" id="tooltip-content"></div>
+    </div>
+
+    <footer>
+        <p>Threadkeeper &bull; Last updated: <span id="timestamp"></span></p>
+    </footer>
+
     <script>
-        // Configuration
         const MANIFEST_PATH = 'data/manifest.json';
         const HANDOVER_PATH = 'data/handover.json';
-        const THREAD_PATH = 'data/thread.json';
+        const THREAD_PATH   = 'data/thread.json';
 
-        // Section configuration with icons and styling
-        const sections = [
-            {
-                key: 'objective',
-                title: 'Objective',
-                icon: '🎯',
-                className: 'objective',
-                emptyText: 'No objective defined yet'
-            },
-            {
-                key: 'lastError',
-                title: 'Last Error',
-                icon: '⚠️',
-                className: 'error',
-                emptyText: 'No errors recorded'
-            },
-            {
-                key: 'deadEnds',
-                title: 'Dead Ends',
-                icon: '🚫',
-                className: 'deadends',
-                emptyText: 'No dead ends documented'
-            },
-            {
-                key: 'nextStep',
-                title: 'Next Step',
-                icon: '✅',
-                className: 'nextstep',
-                emptyText: 'No next step defined'
-            }
-        ];
+        const loadingEl          = document.getElementById('loading');
+        const errorContainerEl   = document.getElementById('error-container');
+        const dashboardEl        = document.getElementById('dashboard');
+        const threadSectionEl    = document.getElementById('thread-section');
+        const gitDiffEl          = document.getElementById('git-diff');
+        const terminalLogEl      = document.getElementById('terminal-log');
+        const filesListEl        = document.getElementById('files-list');
+        const handoverSectionEl  = document.getElementById('handover-section');
+        const handoverMessageEl  = document.getElementById('handover-message');
+        const timestampEl        = document.getElementById('timestamp');
 
-        // DOM elements
-        const loadingEl = document.getElementById('loading');
-        const errorContainerEl = document.getElementById('error-container');
-        const dashboardEl = document.getElementById('dashboard');
-        const threadSectionEl = document.getElementById('thread-section');
-        const gitDiffEl = document.getElementById('git-diff');
-        const terminalLogEl = document.getElementById('terminal-log');
-        const filesListEl = document.getElementById('files-list');
-        const handoverSectionEl = document.getElementById('handover-section');
-        const handoverMessageEl = document.getElementById('handover-message');
-        const timestampEl = document.getElementById('timestamp');
-
-        // Create a card element
-        function createCard(section, content) {
-            const card = document.createElement('div');
-            card.className = `card ${section.className}`;
-
-            const header = document.createElement('div');
-            header.className = 'card-header';
-
-            const icon = document.createElement('span');
-            icon.className = 'card-icon';
-            icon.textContent = section.icon;
-
-            const title = document.createElement('h2');
-            title.className = 'card-title';
-            title.textContent = section.title;
-
-            header.appendChild(icon);
-            header.appendChild(title);
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'card-content';
-            
-            if (!content || content.trim() === '') {
-                contentDiv.classList.add('empty');
-                contentDiv.textContent = section.emptyText;
-            } else {
-                contentDiv.textContent = content;
-            }
-
-            card.appendChild(header);
-            card.appendChild(contentDiv);
-
-            return card;
+        // ── Tab switching ──────────────────────────────────────────────────
+        function switchTab(btn, tabName) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('panel-' + tabName).classList.add('active');
+            btn.classList.add('active');
         }
 
-        // Display error message
+        // ── Populate a main-column card ────────────────────────────────────
+        function renderColumnCard(containerId, content, emptyText) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const card = document.createElement('div');
+            card.className = 'data-card';
+            const body = document.createElement('div');
+            body.className = 'data-card-content';
+            if (!content || content.trim() === '') {
+                body.classList.add('empty');
+                body.textContent = emptyText;
+            } else {
+                body.textContent = content;
+            }
+            card.appendChild(body);
+            container.innerHTML = '';
+            container.appendChild(card);
+        }
+
+        // ── Populate sidebar error ─────────────────────────────────────────
+        function renderSidebarError(content) {
+            const container = document.getElementById('sidebar-error-content');
+            if (!container) return;
+            if (!content || content.trim() === '') {
+                container.innerHTML = '<div class="error-card-empty">No errors recorded</div>';
+            } else {
+                const card = document.createElement('div');
+                card.className = 'error-card';
+                card.textContent = content;
+                container.innerHTML = '';
+                container.appendChild(card);
+            }
+        }
+
+        // ── Copy sidebar error to clipboard ───────────────────────────────
+        async function copySidebarError() {
+            const container = document.getElementById('sidebar-error-content');
+            if (!container) return;
+            try {
+                await navigator.clipboard.writeText(container.textContent.trim());
+            } catch (e) { console.error('Copy failed:', e); }
+        }
+
+        // ── Generate / toggle handover section ────────────────────────────
+        function generateHandover() {
+            if (handoverSectionEl.style.display === 'none' || !handoverSectionEl.style.display) {
+                handoverSectionEl.style.display = 'block';
+                handoverSectionEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                handoverSectionEl.style.display = 'none';
+            }
+        }
+
+        // ── Display error message ──────────────────────────────────────────
         function showError(message) {
             loadingEl.style.display = 'none';
-            dashboardEl.style.display = 'none';
-            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `
-                <strong>⚠️ Error Loading Dashboard</strong><br>
-                ${message}
-            `;
-            
+            errorDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Error Loading Dashboard</strong> — ${message}`;
             errorContainerEl.innerHTML = '';
             errorContainerEl.appendChild(errorDiv);
         }
 
-        // Format timestamp for Slack-like display
+        // ── Slack-style timestamp ──────────────────────────────────────────
         function formatSlackTimestamp(isoString) {
             const date = new Date(isoString);
-            const now = new Date();
-            const diffMs = now - date;
+            const diffMs   = Date.now() - date;
             const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
+            const diffHours= Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
-
-            if (diffMins < 1) return 'just now';
+            if (diffMins < 1)  return 'just now';
             if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-            if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-            
-            return date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            if (diffHours < 24)return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            if (diffDays < 7)  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
-        // Get initials from username
         function getInitials(username) {
-            return username
-                .split(' ')
-                .map(word => word[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2);
+            return username.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         }
 
-        // Load and display handover note
+        // ── Load handover note ─────────────────────────────────────────────
         async function loadHandover() {
             try {
                 const response = await fetch(HANDOVER_PATH);
-                
-                if (!response.ok) {
-                    // If handover doesn't exist, just hide the section
-                    handoverSectionEl.style.display = 'none';
-                    return;
-                }
-
+                if (!response.ok) { handoverSectionEl.style.display = 'none'; return; }
                 const data = await response.json();
 
-                // Show handover section
-                handoverSectionEl.style.display = 'block';
-
-                // Create avatar with initials
                 const avatar = document.createElement('div');
                 avatar.className = 'slack-avatar';
                 avatar.textContent = getInitials(data.username || 'Developer');
 
-                // Create content container
                 const content = document.createElement('div');
                 content.className = 'slack-content';
 
-                // Create header with username and timestamp
                 const header = document.createElement('div');
                 header.className = 'slack-header';
 
@@ -1219,10 +1075,8 @@
                 header.appendChild(username);
                 header.appendChild(timestamp);
 
-                // Create message text
                 const messageText = document.createElement('div');
                 messageText.className = 'slack-message-text';
-                
                 if (!data.message || data.message.trim() === '') {
                     messageText.classList.add('empty');
                     messageText.textContent = 'No handover note available';
@@ -1232,71 +1086,58 @@
 
                 content.appendChild(header);
                 content.appendChild(messageText);
-
-                // Clear and populate handover message
                 handoverMessageEl.innerHTML = '';
                 handoverMessageEl.appendChild(avatar);
                 handoverMessageEl.appendChild(content);
 
             } catch (error) {
                 console.error('Error loading handover:', error);
-                // Don't show error for handover, just hide the section
                 handoverSectionEl.style.display = 'none';
             }
         }
 
-        // Toggle section visibility
+        // ── Toggle section (kept for internal use) ─────────────────────────
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
             const toggleIcon = document.getElementById(sectionId.replace('-section', '-toggle'));
-            
             if (section.classList.contains('collapsed')) {
                 section.classList.remove('collapsed');
-                toggleIcon.classList.remove('collapsed');
+                if (toggleIcon) toggleIcon.classList.remove('collapsed');
             } else {
                 section.classList.add('collapsed');
-                toggleIcon.classList.add('collapsed');
+                if (toggleIcon) toggleIcon.classList.add('collapsed');
             }
         }
 
-        // Copy content to clipboard
+        // ── Copy content to clipboard ──────────────────────────────────────
         async function copyContent(elementId) {
             const element = document.getElementById(elementId);
-            const button = event.currentTarget;
-            
+            const button  = event.currentTarget;
             try {
                 await navigator.clipboard.writeText(element.textContent);
                 button.classList.add('copied');
-                button.querySelector('span:last-child').textContent = 'Copied!';
-                
+                button.querySelector('span') && (button.querySelector('span').textContent = 'Copied!');
                 setTimeout(() => {
                     button.classList.remove('copied');
-                    button.querySelector('span:last-child').textContent = 'Copy';
+                    button.querySelector('span') && (button.querySelector('span').textContent = 'Copy');
                 }, 2000);
-            } catch (err) {
-                console.error('Failed to copy:', err);
-            }
+            } catch (err) { console.error('Failed to copy:', err); }
         }
 
-        // Filter functionality
+        // ── Filter helper ──────────────────────────────────────────────────
         function setupFilter(inputId, containerId) {
-            const input = document.getElementById(inputId);
+            const input     = document.getElementById(inputId);
             const container = document.getElementById(containerId);
-            
             if (!input || !container) return;
-            
-            input.addEventListener('input', (e) => {
-                const filterText = e.target.value.toLowerCase();
-                const items = container.children;
-                
-                Array.from(items).forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    item.style.display = text.includes(filterText) ? '' : 'none';
+            input.addEventListener('input', e => {
+                const q = e.target.value.toLowerCase();
+                Array.from(container.children).forEach(item => {
+                    item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
                 });
             });
         }
 
-        // Parse and display git diff with stats
+        // ── Git diff ───────────────────────────────────────────────────────
         function displayGitDiff(diffText) {
             if (!diffText || diffText.trim() === '') {
                 gitDiffEl.style.display = 'none';
@@ -1304,63 +1145,43 @@
                 document.getElementById('git-diff-stats').style.display = 'none';
                 return;
             }
-
             gitDiffEl.style.display = 'block';
             document.getElementById('git-diff-filter-container').style.display = 'flex';
             gitDiffEl.innerHTML = '';
 
-            const lines = diffText.split('\n');
-            let addedLines = 0;
-            let removedLines = 0;
-            let filesChanged = 0;
-
-            lines.forEach(line => {
+            let added = 0, removed = 0, files = 0;
+            diffText.split('\n').forEach(line => {
                 const span = document.createElement('span');
-                span.className = 'diff-line';
-
                 if (line.startsWith('diff --git')) {
-                    span.className = 'diff-line diff-file-header';
-                    span.textContent = line;
-                    filesChanged++;
+                    span.className = 'diff-file-header'; files++;
                 } else if (line.startsWith('+') && !line.startsWith('+++')) {
-                    span.className = 'diff-line added';
-                    span.textContent = line;
-                    addedLines++;
+                    span.className = 'diff-line added'; added++;
                 } else if (line.startsWith('-') && !line.startsWith('---')) {
-                    span.className = 'diff-line removed';
-                    span.textContent = line;
-                    removedLines++;
+                    span.className = 'diff-line removed'; removed++;
                 } else {
                     span.className = 'diff-line context';
-                    span.textContent = line;
                 }
-
+                span.textContent = line;
                 gitDiffEl.appendChild(span);
             });
 
-            // Display stats
             const statsEl = document.getElementById('git-diff-stats');
             statsEl.style.display = 'flex';
             statsEl.innerHTML = `
                 <div class="stat-item">
-                    <span>📁 Files:</span>
-                    <span class="stat-value">${filesChanged}</span>
+                    <i class="fa-regular fa-folder"></i> Files:
+                    <span class="stat-value">${files}</span>
                 </div>
-                <div class="stat-item">
-                    <span style="color: var(--accent-nextstep)">+ Added:</span>
-                    <span class="stat-value" style="color: var(--accent-nextstep)">${addedLines}</span>
+                <div class="stat-item" style="color: #059669;">
+                    + Added: <span class="stat-value" style="color: #059669;">${added}</span>
                 </div>
-                <div class="stat-item">
-                    <span style="color: var(--accent-error)">- Removed:</span>
-                    <span class="stat-value" style="color: var(--accent-error)">${removedLines}</span>
-                </div>
-            `;
-
-            // Setup filter
+                <div class="stat-item" style="color: #dc2626;">
+                    &minus; Removed: <span class="stat-value" style="color: #dc2626;">${removed}</span>
+                </div>`;
             setupFilter('git-diff-filter', 'git-diff');
         }
 
-        // Display terminal commands with stats
+        // ── Terminal log ───────────────────────────────────────────────────
         function displayTerminalLog(commands) {
             if (!commands || commands.length === 0) {
                 terminalLogEl.style.display = 'none';
@@ -1368,255 +1189,202 @@
                 document.getElementById('terminal-stats').style.display = 'none';
                 return;
             }
-
             terminalLogEl.style.display = 'block';
             document.getElementById('terminal-filter-container').style.display = 'flex';
             terminalLogEl.innerHTML = '';
-
             commands.forEach(cmd => {
                 const span = document.createElement('span');
                 span.className = 'terminal-command';
                 span.textContent = cmd.replace(/\r?\n/g, '');
                 terminalLogEl.appendChild(span);
             });
-
-            // Display stats
             const statsEl = document.getElementById('terminal-stats');
             statsEl.style.display = 'flex';
             statsEl.innerHTML = `
                 <div class="stat-item">
-                    <span>💻 Commands:</span>
+                    <i class="fa-solid fa-terminal"></i> Commands:
                     <span class="stat-value">${commands.length}</span>
-                </div>
-            `;
-
-            // Setup filter
+                </div>`;
             setupFilter('terminal-filter', 'terminal-log');
         }
 
-        // Display modified files with stats
+        // ── Files list (tab panel + sidebar) ──────────────────────────────
         function displayFilesList(files) {
+            // Sidebar: 5 most recently modified, scrollable
+            const sidebarEl = document.getElementById('sidebar-files');
+            if (sidebarEl) {
+                sidebarEl.innerHTML = '';
+                if (files && files.length > 0) {
+                    const sorted = [...files].sort((a, b) => new Date(b.modified) - new Date(a.modified));
+                    sorted.forEach(file => {
+                        const item = document.createElement('div');
+                        item.className = 'sidebar-file-item';
+                        const path = document.createElement('span');
+                        path.className = 'sidebar-file-path';
+                        path.textContent = file.relativePath || file.path;
+                        const time = document.createElement('span');
+                        time.className = 'sidebar-file-time';
+                        time.textContent = new Date(file.modified).toLocaleString();
+                        item.appendChild(path);
+                        item.appendChild(time);
+                        sidebarEl.appendChild(item);
+                    });
+                } else {
+                    sidebarEl.innerHTML = '<div style="font-size:0.8rem;color:var(--text-secondary);font-style:italic;">No modified files</div>';
+                }
+            }
+
+            // Tab panel: filterable full list
             if (!files || files.length === 0) {
                 filesListEl.style.display = 'none';
                 document.getElementById('files-filter-container').style.display = 'none';
                 document.getElementById('files-stats').style.display = 'none';
                 return;
             }
-
             filesListEl.style.display = 'block';
             document.getElementById('files-filter-container').style.display = 'flex';
             filesListEl.innerHTML = '';
-
             files.forEach(file => {
                 const item = document.createElement('div');
                 item.className = 'file-item';
-
                 const path = document.createElement('span');
                 path.className = 'file-path';
                 path.textContent = file.relativePath || file.path;
-
                 const time = document.createElement('span');
                 time.className = 'file-time';
-                const modDate = new Date(file.modified);
-                time.textContent = modDate.toLocaleString();
-
+                time.textContent = new Date(file.modified).toLocaleString();
                 item.appendChild(path);
                 item.appendChild(time);
                 filesListEl.appendChild(item);
             });
-
-            // Display stats
             const statsEl = document.getElementById('files-stats');
             statsEl.style.display = 'flex';
             statsEl.innerHTML = `
                 <div class="stat-item">
-                    <span>📁 Files Modified:</span>
+                    <i class="fa-regular fa-folder"></i> Files Modified:
                     <span class="stat-value">${files.length}</span>
-                </div>
-            `;
-
-            // Setup filter
+                </div>`;
             setupFilter('files-filter', 'files-list');
         }
 
-        // Load and display thread data
+        // ── Thread data ────────────────────────────────────────────────────
         async function loadThreadData() {
             try {
                 const response = await fetch(THREAD_PATH);
-                
-                if (!response.ok) {
-                    threadSectionEl.style.display = 'none';
-                    return;
-                }
-
+                if (!response.ok) { threadSectionEl.style.display = 'none'; return; }
                 const data = await response.json();
-
-                // Show thread section
                 threadSectionEl.style.display = 'block';
-
-                // Display git diff
                 displayGitDiff(data.gitDiff);
-
-                // Display terminal commands
                 displayTerminalLog(data.terminalLog);
-
-                // Display modified files
                 displayFilesList(data.openFiles);
-
             } catch (error) {
                 console.error('Error loading thread data:', error);
                 threadSectionEl.style.display = 'none';
             }
         }
 
-        // Load and display code graph
-        // Load and display snapshot timeline
+        // ── Snapshot timeline ──────────────────────────────────────────────
         async function loadTimeline() {
             try {
                 const response = await fetch('data/snapshots/index.json');
-                
-                if (!response.ok) {
-                    console.log('No snapshots available yet');
-                    return;
-                }
-
+                if (!response.ok) return;
                 const data = await response.json();
                 const snapshots = data.snapshots || [];
-                
-                if (snapshots.length === 0) {
-                    return;
-                }
+                if (snapshots.length === 0) return;
 
-                // Show timeline section
                 document.getElementById('timeline-section').style.display = 'block';
-                
                 const timeline = document.getElementById('timeline');
                 timeline.innerHTML = '';
-                
-                // Sort snapshots by timestamp (newest first)
+
                 snapshots.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
+
                 snapshots.forEach((snapshot, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'timeline-item' + (index === 0 ? ' latest' : '');
-                    
-                    const date = new Date(snapshot.timestamp);
-                    const timeStr = date.toLocaleString();
-                    
-                    item.innerHTML = `
-                        <div class="timeline-header">
-                            <div class="timeline-time">${timeStr}</div>
-                            ${index === 0 ? '<span class="timeline-badge">LATEST</span>' : ''}
+                    const card = document.createElement('div');
+                    card.className = 'snapshot-card';
+                    const timeStr = new Date(snapshot.timestamp).toLocaleString();
+                    card.innerHTML = `
+                        <div class="snapshot-time">
+                            <span>${timeStr}</span>
+                            ${index === 0 ? '<span class="snapshot-badge">Latest</span>' : ''}
                         </div>
-                        <div class="timeline-note">${snapshot.note || 'No note'}</div>
-                        <div class="timeline-stats">
-                            <div class="timeline-stat">
-                                <span>📁</span>
-                                <span>${snapshot.filesModified} files</span>
-                            </div>
-                            <div class="timeline-stat">
-                                <span>📦</span>
-                                <span>${snapshot.nodesCount} code items</span>
-                            </div>
-                            <div class="timeline-stat">
-                                <span>🔗</span>
-                                <span>${snapshot.edgesCount} connections</span>
-                            </div>
-                        </div>
-                        <div class="timeline-actions">
-                            <button class="timeline-button" onclick="viewSnapshot('${snapshot.timestamp}')">View</button>
-                            ${index !== 0 ? `<button class="timeline-button" onclick="restoreSnapshot('${snapshot.timestamp}')">Restore</button>` : ''}
-                        </div>
-                    `;
-                    
-                    timeline.appendChild(item);
+                        <div class="snapshot-note">${snapshot.note || 'No note'}</div>
+                        <div class="snapshot-stats">
+                            <span>${snapshot.filesModified} Files</span>
+                            <span>${snapshot.nodesCount} code items</span>
+                            <span>${snapshot.edgesCount} connections</span>
+                            <span class="snapshot-actions">
+                                <button class="snapshot-btn" onclick="viewSnapshot('${snapshot.timestamp}')" title="View">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                                ${index !== 0 ? `<button class="snapshot-btn" onclick="restoreSnapshot('${snapshot.timestamp}')" title="Restore">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                </button>` : ''}
+                            </span>
+                        </div>`;
+                    timeline.appendChild(card);
                 });
-                
             } catch (error) {
                 console.error('Error loading timeline:', error);
             }
         }
 
-        // View a specific snapshot
         function viewSnapshot(timestamp) {
             alert(`Viewing snapshot from ${new Date(timestamp).toLocaleString()}\n\nThis would show the code state at that time.`);
         }
 
-        // Restore a snapshot
         function restoreSnapshot(timestamp) {
             if (confirm(`Restore snapshot from ${new Date(timestamp).toLocaleString()}?\n\nThis will replace your current state.`)) {
                 alert('To restore, run in terminal:\ntk restore ' + timestamp);
             }
         }
 
-        // Load and display code search
+        // ── Code search ────────────────────────────────────────────────────
         async function loadSearch() {
             try {
                 const response = await fetch('data/graph.json');
-                
-                if (!response.ok) {
-                    console.log('No code data available yet');
-                    return;
-                }
-
+                if (!response.ok) return;
                 const graphData = await response.json();
-                
-                // Show search section
                 document.getElementById('search-section').style.display = 'block';
-                
-                const searchButton = document.getElementById('search-button');
-                const searchInput = document.getElementById('search-input');
+
+                const searchButton  = document.getElementById('search-button');
+                const searchInput   = document.getElementById('search-input');
                 const searchResults = document.getElementById('search-results');
-                
+
                 function performSearch() {
                     const query = searchInput.value.toLowerCase().trim();
-                    
                     if (!query) {
-                        searchResults.innerHTML = '<div class="search-empty">Enter a search term to find classes, functions, or files in your code</div>';
+                        searchResults.innerHTML = '<div class="search-empty">Enter a search term to find classes, functions, or files</div>';
                         return;
                     }
-                    
-                    // Search through all code items
-                    const results = graphData.nodes.filter(node => {
-                        return node.name.toLowerCase().includes(query) ||
-                               (node.file && node.file.toLowerCase().includes(query));
-                    });
-                    
+                    const results = graphData.nodes.filter(node =>
+                        node.name.toLowerCase().includes(query) ||
+                        (node.file && node.file.toLowerCase().includes(query))
+                    );
                     if (results.length === 0) {
-                        searchResults.innerHTML = '<div class="search-empty">No results found for "' + query + '"</div>';
+                        searchResults.innerHTML = `<div class="search-empty">No results found for "${query}"</div>`;
                         return;
                     }
-                    
-                    // Display results
                     searchResults.innerHTML = '';
                     results.slice(0, 20).forEach(node => {
                         const item = document.createElement('div');
                         item.className = 'search-result-item';
-                        
-                        let typeLabel = node.type;
-                        if (node.type === 'class') typeLabel = 'Class';
-                        else if (node.type === 'function') typeLabel = 'Function';
-                        else if (node.type === 'dependency') typeLabel = 'Package';
-                        
-                        // Find what calls this and what it calls
+                        const typeLabel = node.type === 'class' ? 'Class' : node.type === 'function' ? 'Function' : 'Package';
                         const callers = graphData.edges.filter(e => e.target === node.id).length;
                         const callees = graphData.edges.filter(e => e.source === node.id).length;
-                        
                         item.innerHTML = `
                             <div class="search-result-header">
                                 <div class="search-result-name">${node.name}</div>
                                 <div class="search-result-type">${typeLabel}</div>
                             </div>
-                            <div class="search-result-file">📄 ${node.file || 'External package'}</div>
+                            <div class="search-result-file">
+                                <i class="fa-regular fa-file-code"></i> ${node.file || 'External package'}
+                            </div>
                             <div class="search-result-details">
                                 ${callers > 0 ? `Used by ${callers} other ${callers === 1 ? 'item' : 'items'}` : 'Not used yet'}
-                                ${callees > 0 ? ` • Uses ${callees} other ${callees === 1 ? 'item' : 'items'}` : ''}
-                            </div>
-                        `;
-                        
+                                ${callees > 0 ? ` &bull; Uses ${callees} other ${callees === 1 ? 'item' : 'items'}` : ''}
+                            </div>`;
                         searchResults.appendChild(item);
                     });
-                    
                     if (results.length > 20) {
                         const more = document.createElement('div');
                         more.className = 'search-empty';
@@ -1624,274 +1392,137 @@
                         searchResults.appendChild(more);
                     }
                 }
-                
                 searchButton.addEventListener('click', performSearch);
-                searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') performSearch();
-                });
-                
+                searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') performSearch(); });
             } catch (error) {
                 console.error('Error loading search:', error);
             }
         }
 
+        // ── Code graph (D3) ────────────────────────────────────────────────
         async function loadCodeGraph() {
             try {
                 const response = await fetch('data/graph.json');
-                
-                if (!response.ok) {
-                    console.log('No graph data available yet');
-                    return;
-                }
-
+                if (!response.ok) return;
                 const graphData = await response.json();
-                
-                // Show graph section
                 document.getElementById('graph-section').style.display = 'block';
-                
-                // Update stats
-                document.getElementById('total-nodes').textContent = graphData.nodes.length;
-                document.getElementById('total-edges').textContent = graphData.edges.length;
-                document.getElementById('class-count').textContent = 
-                    graphData.nodes.filter(n => n.type === 'class').length;
-                document.getElementById('function-count').textContent = 
-                    graphData.nodes.filter(n => n.type === 'function').length;
-                
-                // Populate language filter
+                document.getElementById('total-nodes').textContent  = graphData.nodes.length;
+                document.getElementById('total-edges').textContent  = graphData.edges.length;
+                document.getElementById('class-count').textContent  = graphData.nodes.filter(n => n.type === 'class').length;
+                document.getElementById('function-count').textContent = graphData.nodes.filter(n => n.type === 'function').length;
                 const languages = [...new Set(graphData.nodes.map(n => n.language).filter(Boolean))];
-                const languageFilter = document.getElementById('language-filter');
+                const langFilter = document.getElementById('language-filter');
                 languages.forEach(lang => {
-                    const option = document.createElement('option');
-                    option.value = lang;
-                    option.textContent = lang.charAt(0).toUpperCase() + lang.slice(1);
-                    languageFilter.appendChild(option);
+                    const opt = document.createElement('option');
+                    opt.value = lang;
+                    opt.textContent = lang.charAt(0).toUpperCase() + lang.slice(1);
+                    langFilter.appendChild(opt);
                 });
-                
-                // Render graph
                 renderGraph(graphData);
-                
             } catch (error) {
                 console.error('Error loading graph data:', error);
             }
         }
 
-        // Render interactive force-directed graph
         function renderGraph(graphData) {
             try {
-                console.log('Rendering graph with', graphData.nodes.length, 'nodes and', graphData.edges.length, 'edges');
-                
-                const svg = d3.select('#graph-svg');
-                const width = svg.node().clientWidth || 1000;
-                const height = 600;
-                
-                console.log('SVG dimensions:', width, 'x', height);
-                
+                const svg    = d3.select('#graph-svg');
+                const width  = svg.node().clientWidth || 1000;
+                const height = 500;
                 svg.selectAll('*').remove();
-                
                 const g = svg.append('g');
-            
-            // Add zoom behavior
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 4])
-                .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
-                });
-            
-            svg.call(zoom);
-            
-                // Filter out edges that reference non-existent nodes
-                const nodeIds = new Set(graphData.nodes.map(n => n.id));
-                const validEdges = graphData.edges.filter(e => {
-                    const valid = nodeIds.has(e.source) && nodeIds.has(e.target);
-                    if (!valid) {
-                        console.warn('Skipping invalid edge:', e);
-                    }
-                    return valid;
-                });
-                
-                console.log('Valid edges:', validEdges.length, 'of', graphData.edges.length);
-                
-                // Create force simulation
+
+                const zoom = d3.zoom().scaleExtent([0.1, 4]).on('zoom', event => g.attr('transform', event.transform));
+                svg.call(zoom);
+
+                const nodeIds    = new Set(graphData.nodes.map(n => n.id));
+                const validEdges = graphData.edges.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
+
                 const simulation = d3.forceSimulation(graphData.nodes)
-                    .force('link', d3.forceLink(validEdges)
-                        .id(d => d.id)
-                        .distance(100))
-                    .force('charge', d3.forceManyBody().strength(-300))
-                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('link',      d3.forceLink(validEdges).id(d => d.id).distance(100))
+                    .force('charge',    d3.forceManyBody().strength(-300))
+                    .force('center',    d3.forceCenter(width / 2, height / 2))
                     .force('collision', d3.forceCollide().radius(30));
-            
-                // Create links
-                const link = g.append('g')
-                    .selectAll('line')
-                    .data(validEdges)
-                    .join('line')
+
+                const link = g.append('g').selectAll('line').data(validEdges).join('line')
                     .attr('class', d => `link link-${d.type}`)
                     .attr('stroke-width', 1.5);
-                
-                console.log('Created', link.size(), 'links');
-            
-                // Create nodes
-                const node = g.append('g')
-                    .selectAll('circle')
-                    .data(graphData.nodes)
-                    .join('circle')
+
+                const node = g.append('g').selectAll('circle').data(graphData.nodes).join('circle')
                     .attr('class', d => `node node-${d.type}`)
                     .attr('r', d => d.type === 'class' ? 8 : d.type === 'function' ? 6 : 5)
-                    .attr('stroke', '#fff')
-                    .attr('stroke-width', 2)
+                    .attr('stroke', '#fff').attr('stroke-width', 2)
                     .call(d3.drag()
-                        .on('start', dragstarted)
-                        .on('drag', dragged)
-                        .on('end', dragended));
-                
-                console.log('Created', node.size(), 'nodes');
-            
-                // Add labels
-                const label = g.append('g')
-                    .selectAll('text')
-                    .data(graphData.nodes)
-                    .join('text')
-                    .attr('class', 'node-label')
-                    .attr('dy', -12)
+                        .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+                        .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+                        .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+                const label = g.append('g').selectAll('text').data(graphData.nodes).join('text')
+                    .attr('class', 'node-label').attr('dy', -12)
                     .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
-                
-                console.log('Created', label.size(), 'labels');
-            
-                // Tooltip
+
                 const tooltip = d3.select('#graph-tooltip');
-                
                 node.on('mouseover', function(event, d) {
                     d3.select(this).attr('stroke-width', 3);
                     tooltip.classed('visible', true)
                         .style('left', (event.pageX + 10) + 'px')
-                        .style('top', (event.pageY - 10) + 'px');
+                        .style('top',  (event.pageY - 10) + 'px');
                     document.getElementById('tooltip-title').textContent = d.name;
-                    document.getElementById('tooltip-content').innerHTML = `
-                        <strong>Type:</strong> ${d.type}<br>
-                        <strong>File:</strong> ${d.file || 'External'}<br>
-                        ${d.language ? `<strong>Language:</strong> ${d.language}` : ''}
-                    `;
-                })
-                .on('mouseout', function() {
+                    document.getElementById('tooltip-content').innerHTML =
+                        `<strong>Type:</strong> ${d.type}<br><strong>File:</strong> ${d.file || 'External'}${d.language ? `<br><strong>Language:</strong> ${d.language}` : ''}`;
+                }).on('mouseout', function() {
                     d3.select(this).attr('stroke-width', 2);
                     tooltip.classed('visible', false);
                 });
-                
-                // Update positions on simulation tick
+
                 simulation.on('tick', () => {
-                    link
-                        .attr('x1', d => d.source.x)
-                        .attr('y1', d => d.source.y)
-                        .attr('x2', d => d.target.x)
-                        .attr('y2', d => d.target.y);
-                    
-                    node
-                        .attr('cx', d => d.x)
-                        .attr('cy', d => d.y);
-                    
-                    label
-                        .attr('x', d => d.x)
-                        .attr('y', d => d.y);
+                    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+                    node.attr('cx', d => d.x).attr('cy', d => d.y);
+                    label.attr('x', d => d.x).attr('y', d => d.y);
                 });
-                
-                // Drag functions
-                function dragstarted(event, d) {
-                    if (!event.active) simulation.alphaTarget(0.3).restart();
-                    d.fx = d.x;
-                    d.fy = d.y;
-                }
-                
-                function dragged(event, d) {
-                    d.fx = event.x;
-                    d.fy = event.y;
-                }
-                
-                function dragended(event, d) {
-                    if (!event.active) simulation.alphaTarget(0);
-                    d.fx = null;
-                    d.fy = null;
-                }
-                
-                // Filters
-                const nodeFilter = document.getElementById('node-filter');
+
+                const nodeFilter     = document.getElementById('node-filter');
                 const languageFilter = document.getElementById('language-filter');
-                const searchInput = document.getElementById('search-node');
-                
+                const searchInput    = document.getElementById('search-node');
+
                 function applyFilters() {
-                    const nodeType = nodeFilter.value;
-                    const language = languageFilter.value;
-                    const searchTerm = searchInput.value.toLowerCase();
-                    
-                    node.style('opacity', d => {
-                        const typeMatch = nodeType === 'all' || d.type === nodeType;
-                        const langMatch = language === 'all' || d.language === language;
-                        const searchMatch = !searchTerm || d.name.toLowerCase().includes(searchTerm);
-                        return typeMatch && langMatch && searchMatch ? 1 : 0.1;
-                    });
-                    
-                    label.style('opacity', d => {
-                        const typeMatch = nodeType === 'all' || d.type === nodeType;
-                        const langMatch = language === 'all' || d.language === language;
-                        const searchMatch = !searchTerm || d.name.toLowerCase().includes(searchTerm);
-                        return typeMatch && langMatch && searchMatch ? 1 : 0.1;
-                    });
+                    const nt = nodeFilter.value, lang = languageFilter.value, q = searchInput.value.toLowerCase();
+                    node.style('opacity',  d => (nt === 'all' || d.type === nt) && (lang === 'all' || d.language === lang) && (!q || d.name.toLowerCase().includes(q)) ? 1 : 0.1);
+                    label.style('opacity', d => (nt === 'all' || d.type === nt) && (lang === 'all' || d.language === lang) && (!q || d.name.toLowerCase().includes(q)) ? 1 : 0.1);
                 }
-                
+
                 nodeFilter.addEventListener('change', applyFilters);
                 languageFilter.addEventListener('change', applyFilters);
                 searchInput.addEventListener('input', applyFilters);
-                
-                console.log('Graph rendering complete');
-                
+
             } catch (error) {
                 console.error('Error rendering graph:', error);
-                alert('Error rendering graph: ' + error.message);
             }
         }
 
-        // Load and display manifest data
+        // ── Main dashboard load ────────────────────────────────────────────
         async function loadDashboard() {
             try {
                 const response = await fetch(MANIFEST_PATH);
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to load manifest: ${response.status} ${response.statusText}`);
-                }
-
+                if (!response.ok) throw new Error(`Failed to load manifest: ${response.status} ${response.statusText}`);
                 const data = await response.json();
 
-                // Clear loading state
                 loadingEl.style.display = 'none';
-                dashboardEl.style.display = 'grid';
+                document.getElementById('top-cards').style.display = 'grid';
 
-                // Clear existing content
-                dashboardEl.innerHTML = '';
+                renderColumnCard('card-objective', data.objective, 'No objective defined yet');
+                renderColumnCard('card-nextstep',  data.nextStep,  'No next step defined');
+                renderColumnCard('card-deadends',  data.deadEnds,  'No dead ends documented');
+                renderSidebarError(data.lastError);
 
-                // Create cards for each section
-                sections.forEach(section => {
-                    const content = data[section.key];
-                    const card = createCard(section, content);
-                    dashboardEl.appendChild(card);
-                });
-
-                // Load thread data
                 await loadThreadData();
-
-                // Load handover note
                 await loadHandover();
-
-                // Load code graph
                 await loadCodeGraph();
-
-                // Load snapshot timeline
                 await loadTimeline();
-
-                // Load code search
                 await loadSearch();
 
-                // Update timestamp
-                const now = new Date();
-                timestampEl.textContent = now.toLocaleString();
+                timestampEl.textContent = new Date().toLocaleString();
 
             } catch (error) {
                 console.error('Error loading dashboard:', error);
@@ -1899,11 +1530,7 @@
             }
         }
 
-        // Initialize dashboard on page load
         document.addEventListener('DOMContentLoaded', loadDashboard);
-
-        // Optional: Auto-refresh every 30 seconds
-        // setInterval(loadDashboard, 30000);
     </script>
 </body>
 </html>
