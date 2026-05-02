@@ -180,5 +180,4 @@ Refresh your dashboard at http://127.0.0.1:8000 to see:
 - ⏰ Your saved snapshots
 - 🔍 Code search
 - 🕸️ Visual code map
-
 Everything uses simple language now - no more confusing "nodes" and "edges"!

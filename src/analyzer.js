@@ -8,8 +8,8 @@ const path = require('path');
 
 class CodeAnalyzer {
   constructor() {
-    this.nodes = new Map(); // id -> node
-    this.edges = [];
+    this.nodes = new Map(); // id -> code item (class, function, package)
+    this.edges = []; // connections between code items
     this.fileExtensions = {
       '.js': 'javascript',
       '.jsx': 'javascript',
@@ -34,8 +34,8 @@ class CodeAnalyzer {
       nodes: Array.from(this.nodes.values()),
       edges: this.edges,
       metadata: {
-        totalNodes: this.nodes.size,
-        totalEdges: this.edges.length,
+        totalCodeItems: this.nodes.size,
+        totalConnections: this.edges.length,
         timestamp: new Date().toISOString()
       }
     };
@@ -169,11 +169,11 @@ class CodeAnalyzer {
       }
     }
 
-    // Create call edges
+    // Create call connections between functions
     calls.forEach(calledFunc => {
       const targetId = `${filePath}:${calledFunc}`;
       if (this.nodes.has(targetId)) {
-        // Add edge from file to called function
+        // Add connection from file to called function
         this.addEdge(`file:${filePath}`, targetId, 'calls');
       }
     });
@@ -372,7 +372,7 @@ class CodeAnalyzer {
    * Add an edge to the graph
    */
   addEdge(sourceId, targetId, type) {
-    // Avoid duplicate edges
+    // Avoid duplicate connections
     const edgeExists = this.edges.some(
       e => e.source === sourceId && e.target === targetId && e.type === type
     );

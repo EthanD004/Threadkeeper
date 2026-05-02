@@ -200,7 +200,7 @@ class ThreadKeeperServer {
           },
           {
             name: 'query_graph_nodes',
-            description: 'Search for nodes in the code graph by name, type, or file. Supports fuzzy matching to find classes, functions, or dependencies. Example: search for "CodeAnalyzer" to find the class, or "*.js" to find all JavaScript files.',
+            description: 'Search for code items (classes, functions, packages) in the code graph by name, type, or file. Supports fuzzy matching. Example: search for "CodeAnalyzer" to find the class, or "*.js" to find all JavaScript files.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -518,7 +518,7 @@ class ThreadKeeperServer {
               };
             }
             
-            // Find all edges that point to these nodes
+            // Find all connections that point to these code items
             const callers = [];
             for (const targetNode of targetNodes) {
               const incomingEdges = graphData.edges.filter(edge =>
@@ -585,7 +585,7 @@ class ThreadKeeperServer {
               };
             }
             
-            // Find all edges that originate from these nodes
+            // Find all connections that originate from these code items
             const callees = [];
             for (const sourceNode of sourceNodes) {
               const outgoingEdges = graphData.edges.filter(edge =>
@@ -652,7 +652,7 @@ class ThreadKeeperServer {
               };
             }
             
-            // Find all dependency nodes connected to these nodes
+            // Find all dependency items connected to these code items
             const dependencies = [];
             for (const sourceNode of sourceNodes) {
               const outgoingEdges = graphData.edges.filter(edge =>
@@ -721,7 +721,7 @@ class ThreadKeeperServer {
             const analyses = [];
             
             for (const targetNode of targetNodes) {
-              // Find callers (incoming calls edges)
+              // Find callers (incoming call connections)
               const callers = graphData.edges
                 .filter(edge => edge.target === targetNode.id && edge.type === 'calls')
                 .map(edge => {
@@ -730,7 +730,7 @@ class ThreadKeeperServer {
                 })
                 .filter(Boolean);
               
-              // Find callees (outgoing calls edges)
+              // Find callees (outgoing call connections)
               const callees = graphData.edges
                 .filter(edge => edge.source === targetNode.id && edge.type === 'calls')
                 .map(edge => {
@@ -739,7 +739,7 @@ class ThreadKeeperServer {
                 })
                 .filter(Boolean);
               
-              // Find dependencies (outgoing edges to dependency nodes)
+              // Find dependencies (outgoing connections to dependency items)
               const dependencies = graphData.edges
                 .filter(edge => edge.source === targetNode.id)
                 .map(edge => {

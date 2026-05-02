@@ -1,26 +1,39 @@
 {
   "name": "threadkeeper",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Intelligent development context manager with AI integration via MCP. Captures your work state, analyzes code structure, and helps you resume seamlessly.",
+  "main": "src/cli.js",
   "bin": {
     "tk": "./src/cli.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "mcp": "node src/mcp-server.js"
+    "start": "node src/cli.js",
+    "mcp": "node src/mcp-server.js",
+    "verify": "node verify-setup.js",
+    "dashboard": "npx http-server -p 8000 -c-1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EthanD004/Threadkeeper.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "development",
+    "context",
+    "workflow",
+    "mcp",
+    "ibm-bob",
+    "code-analysis",
+    "git",
+    "developer-tools",
+    "productivity",
+    "ai-integration"
+  ],
+  "author": "Ethan Danaher",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/EthanD004/Threadkeeper/issues"
   },
   "homepage": "https://github.com/EthanD004/Threadkeeper#readme",
-  "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^14.0.3",

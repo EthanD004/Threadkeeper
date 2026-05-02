@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Manifest Loading</title>
+</head>
+<body>
+    <h1>Manifest Test</h1>
+    <div id="status">Loading...</div>
+    <pre id="data"></pre>
+    
+    <script>
+        async function testLoad() {
+            const statusEl = document.getElementById('status');
+            const dataEl = document.getElementById('data');
+            
+            try {
+                console.log('Fetching manifest...');
+                const response = await fetch('data/manifest.json');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data loaded:', data);
+                
+                statusEl.textContent = 'SUCCESS! Manifest loaded.';
+                statusEl.style.color = 'green';
+                dataEl.textContent = JSON.stringify(data, null, 2);
+                
+                // Test the fields
+                console.log('Objective:', data.objective);
+                console.log('Last Error:', data.lastError);
+                console.log('Dead Ends:', data.deadEnds);
+                console.log('Next Step:', data.nextStep);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = 'ERROR: ' + error.message;
+                statusEl.style.color = 'red';
+            }
+        }
+        
+        testLoad();
+    </script>
+</body>
+</html>

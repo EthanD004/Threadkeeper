@@ -284,7 +284,7 @@ async function captureState(note = '') {
   console.log(`- Files modified in last 2 hours: ${sortedFiles.length}`);
   console.log(`- Git diff size: ${gitDiff.length} characters`);
   console.log(`- Terminal history: ${terminalLog.length} commands`);
-  console.log(`- Code graph: ${codeGraph.nodes.length} nodes, ${codeGraph.edges.length} edges`);
+  console.log(`- Code graph: ${codeGraph.nodes.length} code items, ${codeGraph.edges.length} connections`);
   console.log(`- Snapshot saved to: ${snapshotDir}`);
   console.log(`- Current state: ${outputPath}`);
   console.log(`- Total snapshots: ${index.snapshots.length}`);
